@@ -45,8 +45,8 @@ app.use(function(req, res, next){
    res.locals.success=req.flash("success");
    next();
 });
-//mongoose.connect(process.env.DATABASEURL);
-mongoose.connect("mongodb://localhost/yelp-camp", {useMongoClient: true});
+mongoose.connect(process.env.YELPDATABASEURL);
+//mongoose.connect("mongodb://localhost/yelp-camp", {useMongoClient: true});
 //mongoose.connect("mongodb://tbt:password@ds053459.mlab.com:53459/tbt-yelpcamp");
 //mongoose.Promise = global.Promise; 
 //schema setup
