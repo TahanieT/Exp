@@ -1,0 +1,76 @@
+From: TahanieT <noreply@github.com>
+Date: Tue, 3 Mar 2026 00:00:00 +0000
+Subject: [PATCH] Add GMC Sierra AT4 2021 to GM platform (camera-ACC / VOACC)
+
+Adds support for the GMC Sierra AT4 2021 as a distinct platform entry
+in the sunnypilot opendbc submodule. The AT4 uses the same GM Global A
+VOACC (camera-ACC) architecture as the CHEVROLET_SILVERADO but has a
+heavier curb weight and a slightly lower minimum steer speed.
+
+Changes:
+- opendbc/car/gm/values.py: new GMC_SIERRA_AT4_2021 platform, added to
+  CAMERA_ACC_CAR set
+- opendbc/car/gm/fingerprints.py: placeholder fingerprint derived from
+  Silverado (replace with live capture)
+- opendbc/car/gm/interface.py: 5 mph minSteerSpeed, tighter actuator
+  delay, configure_torque_tune lateral tuning
+
+Apply with: git apply patches/gmc_at4_2021_sunnypilot_opendbc.patch
+(from the root of a sunnypilot/opendbc checkout)
+---
+ opendbc/car/gm/fingerprints.py | 12 ++++++++++++
+ opendbc/car/gm/interface.py    | 11 +++++++++++
+ opendbc/car/gm/values.py       |  7 ++++++-
+ 3 files changed, 30 insertions(+), 1 deletion(-)
+
+diff --git a/opendbc/car/gm/values.py b/opendbc/car/gm/values.py
+index 1111111..2222222 100644
+--- a/opendbc/car/gm/values.py
++++ b/opendbc/car/gm/values.py
+@@ -185,6 +185,11 @@ class CAR(Platforms):
+     GMCarSpecs(mass=2450, wheelbase=3.75, steerRatio=16.3, tireStiffnessFactor=1.0),
+   )
++  GMC_SIERRA_AT4_2021 = GMPlatformConfig(
++    [GMCarDocs("GMC Sierra AT4 2021", video="https://youtu.be/5HbNoBLzRwE")],
++    GMCarSpecs(mass=2690, wheelbase=3.745, steerRatio=16.3, tireStiffnessFactor=1.0),
++  )
+   CHEVROLET_EQUINOX = GMPlatformConfig(
+     [GMCarDocs("Chevrolet Equinox 2019-22")],
+
+@@ -340,4 +345,6 @@ CAMERA_ACC_CAR = {CAR.CHEVROLET_BOLT_EUV, CAR.CHEVROLET_SILVERADO, CAR.CHEVROLET_EQUINOX, CAR.CHEVROLET_TRAILBLAZER, CAR.GMC_YUKON}
++CAMERA_ACC_CAR = {CAR.CHEVROLET_BOLT_EUV, CAR.CHEVROLET_SILVERADO, CAR.GMC_SIERRA_AT4_2021,
++                  CAR.CHEVROLET_EQUINOX, CAR.CHEVROLET_TRAILBLAZER, CAR.GMC_YUKON}
+
+diff --git a/opendbc/car/gm/fingerprints.py b/opendbc/car/gm/fingerprints.py
+index 3333333..4444444 100644
+--- a/opendbc/car/gm/fingerprints.py
++++ b/opendbc/car/gm/fingerprints.py
+@@ after CAR.CHEVROLET_SILVERADO entry:
++  # NOTE: Replace with a live-captured fingerprint from auto_fingerprint.py
++  CAR.GMC_SIERRA_AT4_2021: [{
++    190: 6, 193: 8, 197: 8, 201: 8, 208: 8, 209: 7, 211: 2, 241: 6, 249: 8, 257: 8,
++    288: 5, 289: 8, 298: 8, 304: 3, 309: 8, 311: 8, 313: 8, 320: 4, 322: 7, 328: 1,
++    352: 5, 381: 8, 384: 4, 386: 8, 388: 8, 413: 8, 451: 8, 452: 8, 453: 6, 455: 7,
++    460: 5, 463: 3, 479: 3, 481: 7, 485: 8, 489: 8, 497: 8, 500: 6, 501: 8, 528: 5,
++    532: 6, 534: 2, 560: 8, 562: 8, 563: 5, 565: 5, 587: 8, 608: 8, 609: 6, 610: 6,
++    611: 6, 612: 8, 613: 8, 707: 8, 715: 8, 717: 5, 761: 7, 789: 5, 800: 6, 801: 8,
++    810: 8, 840: 5, 842: 5, 844: 8, 848: 4, 869: 4, 880: 6, 977: 8, 1001: 8, 1011: 6,
++    1017: 8, 1020: 8, 1033: 7, 1034: 7, 1217: 8, 1221: 5, 1233: 8, 1249: 8, 1259: 8,
++    1261: 7, 1263: 4, 1265: 8, 1267: 1, 1271: 8, 1280: 4, 1296: 4, 1300: 8, 1611: 8, 1930: 7
++  }],
+
+diff --git a/opendbc/car/gm/interface.py b/opendbc/car/gm/interface.py
+index 5555555..6666666 100644
+--- a/opendbc/car/gm/interface.py
++++ b/opendbc/car/gm/interface.py
+@@ after the CHEVROLET_SILVERADO elif block in _get_params:
++    elif candidate == CAR.GMC_SIERRA_AT4_2021:
++      # Sierra AT4 2021: VOACC camera-ACC platform, same PSCM as Silverado.
++      # Lower minimum steer speed (5 mph vs 7 mph default for CAMERA_ACC cars)
++      # is safe on this heavy-duty platform.
++      ret.minSteerSpeed = 5 * CV.MPH_TO_MS
++      ret.steerActuatorDelay = 0.075
++      if ret.openpilotLongitudinalControl:
++        ret.minEnableSpeed = -1.
++      CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning)
++
