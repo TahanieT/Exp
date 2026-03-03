@@ -25,12 +25,12 @@ CAR_INFO: Dict[str, Union[GMCarInfo, List[GMCarInfo]]] = {
   CAR.GMC_SIERRA_AT4_2021: GMCarInfo(
     "GMC Sierra AT4 2021",
     video_link="https://comma.ai/vehicles/gmc",
-    min_steer_speed=7. * CV.MPH_TO_MS,
+    min_steer_speed=5. * CV.MPH_TO_MS,
   ),
   CAR.GMC_SIERRA_1500_AT4: GMCarInfo(
     "GMC Sierra 1500 AT4",
     video_link="https://comma.ai/vehicles/gmc",
-    min_steer_speed=7. * CV.MPH_TO_MS,
+    min_steer_speed=5. * CV.MPH_TO_MS,
   ),
 }
 
@@ -126,7 +126,7 @@ GMC_AT4_2021_TUNING = {
   "steerLimitTimer": 0.4,
   "steerMaxBP": [0.],
   "steerMaxV": [1.],
-  "minSteerSpeed": 7. * 0.44704,  # 7 mph in m/s
+  "minSteerSpeed": 5. * 0.44704,  # 5 mph in m/s
   "minEnableSpeed": -1.,           # enable at all speeds for trucks with auto-hold
   "mass": 2540 + 150,              # GMC Sierra AT4 curb weight + 150 kg occupants (kg)
   "wheelbase": 3.745,              # meters (147.4 inches)

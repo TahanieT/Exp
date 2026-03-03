@@ -30,7 +30,7 @@ class CarInterface(CarInterfaceBase):
   Notes:
     - The GMC Sierra AT4 2021 uses GM Global A CAN architecture
     - Steer-by-wire torque overlay via PSCM (Power Steering Control Module)
-    - Minimum steer speed: 7 mph
+    - Minimum steer speed: 5 mph
     - Max lateral acceleration: ~3.0 m/s² (limited by tire/weight)
   """
 
