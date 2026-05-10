@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AOL Platform Reuse Selector</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-primary:    #0f172a;
+  --bg-secondary:  #1e293b;
+  --bg-card:       #1e293b;
+  --border:        #334155;
+  --text-primary:  #f1f5f9;
+  --text-secondary:#94a3b8;
+  --text-muted:    #64748b;
+  --accent:        #3b82f6;
+  --accent-hover:  #2563eb;
+  --green:         #22c55e;
+  --yellow:        #f59e0b;
+  --red:           #ef4444;
+}
+
+body {
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  font-size: 14px;
+}
+
+/* ── Header ── */
+.header {
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 54px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  flex: 1;
+  white-space: nowrap;
+}
+.header-logo span {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-muted);
+  margin-left: 4px;
+}
+
+/* ── Buttons ── */
+.btn {
+  padding: 6px 13px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+.btn:hover { background: #334155; color: var(--text-primary); border-color: #475569; }
+.btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+.btn-ghost { border-color: transparent; }
+
+/* ── Main ── */
+.main {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* ── Stats ── */
+.stats-bar {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+.stat-value { font-size: 26px; font-weight: 700; line-height: 1; }
+.stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; margin-top: 3px; }
+.stat-card.green  .stat-value { color: var(--green); }
+.stat-card.yellow .stat-value { color: var(--yellow); }
+.stat-card.red    .stat-value { color: var(--red); }
+.stat-card.blue   .stat-value { color: var(--accent); }
+
+/* ── Controls ── */
+.controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+  align-items: center;
+}
+.search-input {
+  flex: 1;
+  padding: 7px 11px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 13px;
+  outline: none;
+}
+.search-input:focus { border-color: var(--accent); }
+.search-input::placeholder { color: var(--text-muted); }
+.select-ctrl {
+  padding: 7px 11px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  outline: none;
+  cursor: pointer;
+}
+
+/* ── Table ── */
+.platform-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 3px;
+}
+.platform-table thead th {
+  text-align: left;
+  padding: 7px 12px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--text-muted);
+  font-weight: 500;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+}
+.platform-row {
+  background: var(--bg-card);
+  transition: background 0.1s;
+  cursor: default;
+}
+.platform-row:hover { background: #253347; }
+.platform-row td {
+  padding: 11px 12px;
+  vertical-align: middle;
+  border-top: 1px solid #263344;
+  border-bottom: 1px solid #263344;
+}
+.platform-row td:first-child { border-left: 1px solid #263344; border-radius: 7px 0 0 7px; }
+.platform-row td:last-child  { border-right: 1px solid #263344; border-radius: 0 7px 7px 0; }
+
+/* Rank badge */
+.rank-badge {
+  width: 27px; height: 27px;
+  border-radius: 50%;
+  background: #2d3f55;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 600; color: var(--text-muted);
+}
+.rank-badge.gold   { background: #3b2d0a; color: #fbbf24; }
+.rank-badge.silver { background: #252f3e; color: #94a3b8; }
+.rank-badge.bronze { background: #2d1f0e; color: #f97316; }
+
+.platform-id   { font-weight: 600; font-size: 14px; }
+.platform-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+/* Score */
+.score-cell { display: flex; align-items: center; gap: 8px; }
+.score-num  { font-size: 22px; font-weight: 700; min-width: 36px; text-align: right; }
+.score-num.high   { color: var(--green); }
+.score-num.medium { color: var(--yellow); }
+.score-num.low    { color: var(--red); }
+
+.tier-badge {
+  font-size: 10px; font-weight: 600;
+  padding: 2px 8px; border-radius: 20px;
+  text-transform: uppercase; letter-spacing: .04em;
+}
+.tier-badge.high   { background: #14532d33; color: #4ade80; border: 1px solid #14532d; }
+.tier-badge.medium { background: #451a0333; color: #fbbf24; border: 1px solid #78350f; }
+.tier-badge.low    { background: #450a0a33; color: #f87171; border: 1px solid #7f1d1d; }
+
+/* Breakdown bars */
+.breakdown { display: flex; flex-direction: column; gap: 3px; min-width: 190px; }
+.bk-item { display: flex; align-items: center; gap: 5px; font-size: 11px; }
+.bk-label { width: 88px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
+.bk-track { flex: 1; height: 5px; background: #334155; border-radius: 3px; overflow: hidden; }
+.bk-fill  { height: 100%; border-radius: 3px; }
+.bk-pts   { width: 26px; text-align: right; color: var(--text-secondary); font-weight: 600; }
+
+/* Tags */
+.tag {
+  font-size: 11px; padding: 1px 7px; border-radius: 4px;
+  background: #334155; color: var(--text-secondary);
+}
+.tag.green { background: #14532d33; color: #4ade80; border: 1px solid #14532d; }
+.tag.red   { background: #450a0a33; color: #f87171; border: 1px solid #7f1d1d; }
+
+/* Empty state */
+.empty-state {
+  text-align: center; padding: 80px 24px; color: var(--text-muted);
+}
+.empty-state .icon { font-size: 48px; margin-bottom: 16px; opacity: .5; }
+.empty-state h3 { font-size: 18px; color: var(--text-secondary); margin-bottom: 8px; }
+.empty-state p  { font-size: 13px; max-width: 380px; margin: 0 auto 20px; line-height: 1.6; }
+.empty-state .actions { display: flex; gap: 10px; justify-content: center; }
+
+/* ── Modal ── */
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.75);
+  z-index: 200;
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 32px 20px; overflow-y: auto;
+  opacity: 0; pointer-events: none;
+  transition: opacity .2s;
+}
+.overlay.open { opacity: 1; pointer-events: all; }
+
+.modal {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  width: 100%; max-width: 820px;
+  margin: auto;
+  transform: translateY(-16px);
+  transition: transform .2s;
+}
+.overlay.open .modal { transform: translateY(0); }
+
+.modal-head {
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+.modal-head h2 { font-size: 15px; font-weight: 600; flex: 1; }
+.modal-body { padding: 22px; }
+
+/* Tabs */
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); margin-bottom: 18px; }
+.tab {
+  padding: 7px 16px; font-size: 13px; font-weight: 500;
+  color: var(--text-muted); cursor: pointer;
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+  transition: all .15s;
+}
+.tab:hover  { color: var(--text-secondary); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* Notice */
+.notice {
+  padding: 10px 14px; border-radius: 6px; font-size: 12px;
+  margin-bottom: 16px; display: flex; align-items: flex-start; gap: 8px; line-height: 1.5;
+}
+.notice.info { background: #1e3a5f22; border: 1px solid #1e3a5f; color: #93c5fd; }
+.notice.warn { background: #451a0322; border: 1px solid #78350f; color: #fbbf24; }
+
+/* Total weight bar */
+.weight-gauge {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  background: var(--bg-primary); border: 1px solid var(--border); border-radius: 8px;
+  margin-bottom: 14px;
+}
+.wg-label { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+.wg-track { flex: 1; height: 8px; background: #334155; border-radius: 4px; overflow: hidden; }
+.wg-fill  { height: 100%; border-radius: 4px; transition: width .3s, background .3s; }
+.wg-total { font-size: 14px; font-weight: 700; min-width: 52px; text-align: right; }
+
+/* Criterion card */
+.crit-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px; padding: 14px; margin-bottom: 10px;
+}
+.crit-head { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+.crit-stripe { width: 4px; border-radius: 2px; align-self: stretch; flex-shrink: 0; }
+.crit-body  { flex: 1; }
+.crit-title { font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
+.crit-logic-pill {
+  font-size: 10px; padding: 1px 6px; border-radius: 3px;
+  background: #334155; color: var(--text-muted); font-weight: 400;
+}
+.crit-desc   { font-size: 11px; color: var(--text-muted); }
+.crit-high   { font-size: 11px; margin-top: 3px; }
+.crit-controls { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+
+.num-input {
+  width: 58px; padding: 4px 7px;
+  background: var(--bg-secondary); border: 1px solid var(--border);
+  border-radius: 4px; color: var(--text-primary);
+  font-size: 14px; font-weight: 600; text-align: center; outline: none;
+}
+.num-input:focus { border-color: var(--accent); }
+.num-input-sm {
+  width: 100%; padding: 4px 6px;
+  background: var(--bg-secondary); border: 1px solid var(--border);
+  border-radius: 4px; color: var(--text-primary);
+  font-size: 13px; font-weight: 600; text-align: center; outline: none;
+}
+.num-input-sm:focus { border-color: var(--accent); }
+
+.pts-label { font-size: 11px; color: var(--text-muted); }
+
+.crit-bar { height: 4px; background: #334155; border-radius: 2px; margin-top: 8px; overflow: hidden; }
+.crit-bar-fill { height: 100%; border-radius: 2px; transition: width .3s; }
+
+/* Threshold grid */
+.thresh-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 7px; margin-top: 8px; }
+.thresh-item { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 6px; padding: 7px 9px; }
+.thresh-cond { font-size: 10px; color: var(--text-muted); margin-bottom: 4px; }
+
+.field-badge { font-size: 10px; background: #334155; padding: 1px 5px; border-radius: 3px; color: var(--text-muted); font-family: monospace; }
+
+/* JSON view */
+.json-view {
+  background: var(--bg-primary); border: 1px solid var(--border); border-radius: 8px;
+  padding: 14px; font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 11.5px;
+  color: var(--text-secondary); white-space: pre; overflow: auto; max-height: 420px;
+}
+
+/* Upload area */
+.upload-area {
+  border: 2px dashed var(--border); border-radius: 8px;
+  padding: 30px; text-align: center; cursor: pointer;
+  color: var(--text-muted); transition: all .15s;
+}
+.upload-area:hover { border-color: var(--accent); color: var(--accent); background: #1e3a5f11; }
+.upload-area.over  { border-color: var(--accent); background: #1e3a5f22; }
+
+.csv-paste {
+  width: 100%; height: 110px;
+  background: var(--bg-primary); border: 1px solid var(--border); border-radius: 6px;
+  padding: 9px; color: var(--text-secondary); font-family: monospace; font-size: 11.5px;
+  resize: vertical; outline: none;
+}
+.csv-paste:focus { border-color: var(--accent); }
+
+/* Code chip */
+code { background: #334155; padding: 1px 5px; border-radius: 3px; font-size: 11px; font-family: monospace; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+
+input[type=file] { display: none; }
+
+@media (max-width: 900px) {
+  .stats-bar { grid-template-columns: repeat(3, 1fr); }
+  .breakdown { display: none; }
+}
+@media (max-width: 600px) {
+  .stats-bar { grid-template-columns: 1fr 1fr; }
+  .header-logo span { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── Header ────────────────────────────────────────────── -->
+<header class="header">
+  <div class="header-logo">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+      <polyline points="9 22 9 12 15 12 15 22"/>
+    </svg>
+    AOL Platform Reuse Selector
+    <span>/ Scoring Engine v1.0</span>
+  </div>
+
+  <button class="btn" id="btnPhilosophy">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+    Scoring Philosophy
+  </button>
+  <button class="btn" id="btnLoadData">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    Load CSV
+  </button>
+  <button class="btn" id="btnSample">Sample Data</button>
+  <button class="btn" id="btnExport" style="display:none">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Export CSV
+  </button>
+  <input type="file" id="fileCSV" accept=".csv">
+  <input type="file" id="fileJSON" accept=".json">
+</header>
+
+<!-- ── Main ─────────────────────────────────────────────── -->
+<main class="main">
+
+  <!-- Stats -->
+  <div class="stats-bar" id="statsBar" style="display:none">
+    <div class="stat-card">
+      <div class="stat-value" id="stTotal">—</div>
+      <div class="stat-label">Platforms</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-value" id="stHigh">—</div>
+      <div class="stat-label">Strong (&ge;70)</div>
+    </div>
+    <div class="stat-card yellow">
+      <div class="stat-value" id="stMed">—</div>
+      <div class="stat-label">Moderate (40–69)</div>
+    </div>
+    <div class="stat-card red">
+      <div class="stat-value" id="stLow">—</div>
+      <div class="stat-label">Low Priority (&lt;40)</div>
+    </div>
+    <div class="stat-card blue">
+      <div class="stat-value" id="stAvg">—</div>
+      <div class="stat-label">Avg Score</div>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls" id="controls" style="display:none">
+    <input class="search-input" type="text" id="searchInput" placeholder="Search by platform ID, operator, location…">
+    <select class="select-ctrl" id="sortSel">
+      <option value="score-desc">Score: High → Low</option>
+      <option value="score-asc">Score: Low → High</option>
+      <option value="id-asc">Platform ID A→Z</option>
+      <option value="depth-asc">Depth: Shallowest first</option>
+      <option value="depth-desc">Depth: Deepest first</option>
+    </select>
+    <select class="select-ctrl" id="filterSel">
+      <option value="all">All Tiers</option>
+      <option value="high">Strong Candidates</option>
+      <option value="medium">Moderate</option>
+      <option value="low">Low Priority</option>
+    </select>
+  </div>
+
+  <!-- Results -->
+  <div id="platformList">
+    <div class="empty-state">
+      <div class="icon">🛢️</div>
+      <h3>No platforms loaded</h3>
+      <p>Load a CSV file or try the built-in sample data to score platforms for reuse potential.</p>
+      <div class="actions">
+        <button class="btn btn-primary" id="btnLoadData2">Load CSV</button>
+        <button class="btn" id="btnSample2">Use Sample Data</button>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+
+<!-- ── Scoring Philosophy Modal ──────────────────────────── -->
+<div class="overlay" id="modalPhilosophy">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Scoring Philosophy</h2>
+      <div style="display:flex;gap:7px;margin-left:auto">
+        <button class="btn" id="btnImportJSON">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Import JSON
+        </button>
+        <button class="btn" id="btnExportJSON">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export JSON
+        </button>
+        <button class="btn" id="btnResetConfig">Reset</button>
+        <button class="btn btn-ghost" id="btnClosePhil" style="padding:6px 10px">✕</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="tabs">
+        <div class="tab active" data-tab="visual">Visual Editor</div>
+        <div class="tab" data-tab="json">JSON Config</div>
+      </div>
+
+      <!-- Visual Editor -->
+      <div id="tabVisual">
+        <div class="weight-gauge">
+          <div class="wg-label">Total Weight</div>
+          <div class="wg-track"><div class="wg-fill" id="wgFill"></div></div>
+          <div class="wg-total" id="wgTotal"></div>
+        </div>
+        <div class="notice info">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12" y2="16.5"/></svg>
+          Edit max points per criterion and threshold values. All changes recalculate scores immediately. Total should equal 100.
+        </div>
+        <div id="criteriaEditor"></div>
+      </div>
+
+      <!-- JSON view -->
+      <div id="tabJSON" style="display:none">
+        <div class="notice info" style="margin-bottom:12px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12" y2="16.5"/></svg>
+          Read-only live view of the scoring config. Use <strong>Export JSON</strong> to save it, <strong>Import JSON</strong> to load a saved config.
+        </div>
+        <pre class="json-view" id="jsonView"></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ── Load Data Modal ───────────────────────────────────── -->
+<div class="overlay" id="modalLoad">
+  <div class="modal" style="max-width:540px">
+    <div class="modal-head">
+      <h2>Load Platform Data</h2>
+      <button class="btn btn-ghost" id="btnCloseLoad" style="padding:6px 10px;margin-left:auto">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="notice info">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:2px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12" y2="16.5"/></svg>
+        <div>Expected CSV columns: <code>platform_id</code> <code>water_depth_ft</code> <code>removal_completed</code> <code>modification_app_count</code> <code>latest_app_year</code> <code>has_approval</code><br>Optional: <code>operator</code> <code>location</code> <code>structure_type</code></div>
+      </div>
+      <div class="upload-area" id="uploadArea">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 10px;display:block"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <div style="font-size:13px;font-weight:600;margin-bottom:3px">Drop CSV here or click to browse</div>
+        <div style="font-size:11px">Comma-separated values (.csv)</div>
+      </div>
+      <div style="text-align:center;margin:10px 0;font-size:11px;color:var(--text-muted)">— or paste CSV text —</div>
+      <textarea class="csv-paste" id="csvPaste" placeholder="platform_id,water_depth_ft,removal_completed,modification_app_count,latest_app_year,has_approval&#10;A-12A,78,false,7,2024,true&#10;..."></textarea>
+      <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn" id="btnCancelLoad">Cancel</button>
+        <button class="btn btn-primary" id="btnProcessCSV">Load Data</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+// ────────────────────────────────────────────────────────────────
+//  DEFAULT SCORING CONFIG  (matches reuse_scoring_config.json)
+// ────────────────────────────────────────────────────────────────
+const DEFAULT_CONFIG = {
+  version: "1.0",
+  name: "AOL Platform Reuse Scoring",
+  description: "Scoring criteria for evaluating offshore platforms for reuse potential. Total = 100 pts.",
+  criteria: [
+    {
+      id: "pending_removal",
+      label: "Pending Removal",
+      maxPoints: 40,
+      description: "Whether removal is still pending (not yet completed). Unremoved structures retain reuse opportunity.",
+      highScoringCase: "Not yet removed",
+      logic: "binary",
+      field: "removal_completed",
+      scoreIfFalse: 40,
+      scoreIfTrue: 0
+    },
+    {
+      id: "water_depth",
+      label: "Water Depth",
+      maxPoints: 25,
+      description: "Shallower water = lower cost, easier access, wider reuse market.",
+      highScoringCase: "< 100–200 ft",
+      logic: "range",
+      field: "water_depth_ft",
+      thresholds: [
+        { condition: "≤ 100 ft",  maxDepth: 100,  points: 25 },
+        { condition: "≤ 200 ft",  maxDepth: 200,  points: 18 },
+        { condition: "≤ 400 ft",  maxDepth: 400,  points: 10 },
+        { condition: "≤ 1000 ft", maxDepth: 1000, points: 4  },
+        { condition: "> 1000 ft", maxDepth: null,  points: 0  }
+      ]
+    },
+    {
+      id: "modification_apps",
+      label: "Modification Apps",
+      maxPoints: 20,
+      description: "Count of MODIFICATION applications (not initial). More modifications = active operational interest.",
+      highScoringCase: "Many MODIFICATION applications",
+      logic: "count",
+      field: "modification_app_count",
+      thresholds: [
+        { condition: "≥ 5 apps", minCount: 5, points: 20 },
+        { condition: "≥ 3 apps", minCount: 3, points: 15 },
+        { condition: "≥ 1 app",  minCount: 1, points: 8  },
+        { condition: "0 apps",   minCount: 0, points: 0  }
+      ]
+    },
+    {
+      id: "recent_activity",
+      label: "Recent Activity",
+      maxPoints: 10,
+      description: "How recent the latest removal application is. Recency signals ongoing interest and relevance.",
+      highScoringCase: "Application within last 2 years",
+      logic: "recency",
+      field: "latest_app_year",
+      thresholds: [
+        { condition: "≤ 2 yrs ago",  withinYears: 2,   points: 10 },
+        { condition: "≤ 5 yrs ago",  withinYears: 5,   points: 7  },
+        { condition: "≤ 10 yrs ago", withinYears: 10,  points: 3  },
+        { condition: "> 10 yrs ago", withinYears: null, points: 0  }
+      ]
+    },
+    {
+      id: "approval_record",
+      label: "Approval Record",
+      maxPoints: 5,
+      description: "Has a formal approval on record (approved: true). Signals regulatory standing.",
+      highScoringCase: "Has formal approval",
+      logic: "binary",
+      field: "has_approval",
+      scoreIfTrue: 5,
+      scoreIfFalse: 0
+    }
+  ],
+  scoreThresholds: {
+    high:   { min: 70, label: "Strong Reuse Candidate", color: "#22c55e" },
+    medium: { min: 40, label: "Moderate Candidate",     color: "#f59e0b" },
+    low:    { min: 0,  label: "Low Priority",           color: "#ef4444" }
+  }
+};
+
+// ────────────────────────────────────────────────────────────────
+//  SAMPLE DATA
+// ────────────────────────────────────────────────────────────────
+const SAMPLE_PLATFORMS = [
+  { platform_id:"A-12A",  water_depth_ft:78,   removal_completed:false, modification_app_count:7, latest_app_year:2024, has_approval:true,  operator:"Deep Gulf Ops",   location:"GOM Block 12",  structure_type:"JACKET"  },
+  { platform_id:"B-44C",  water_depth_ft:155,  removal_completed:false, modification_app_count:4, latest_app_year:2023, has_approval:true,  operator:"Coastal Energy",  location:"GOM Block 44",  structure_type:"JACKET"  },
+  { platform_id:"C-91",   water_depth_ft:340,  removal_completed:false, modification_app_count:2, latest_app_year:2022, has_approval:false, operator:"Offshore Sys.",   location:"GOM Block 91",  structure_type:"COMPLEX" },
+  { platform_id:"D-7X",   water_depth_ft:62,   removal_completed:false, modification_app_count:5, latest_app_year:2024, has_approval:true,  operator:"GulfStream LLC",  location:"GOM Block 7",   structure_type:"JACKET"  },
+  { platform_id:"E-220B", water_depth_ft:210,  removal_completed:true,  modification_app_count:1, latest_app_year:2019, has_approval:true,  operator:"Titan Marine",    location:"GOM Block 220", structure_type:"CAISSON" },
+  { platform_id:"F-18",   water_depth_ft:95,   removal_completed:false, modification_app_count:6, latest_app_year:2023, has_approval:false, operator:"Blue Water Co.",  location:"GOM Block 18",  structure_type:"JACKET"  },
+  { platform_id:"G-300",  water_depth_ft:520,  removal_completed:false, modification_app_count:0, latest_app_year:2015, has_approval:false, operator:"Deep Horizon",    location:"GOM Block 300", structure_type:"SPAR"    },
+  { platform_id:"H-55A",  water_depth_ft:130,  removal_completed:false, modification_app_count:3, latest_app_year:2024, has_approval:true,  operator:"GOM Partners",    location:"GOM Block 55",  structure_type:"JACKET"  },
+  { platform_id:"I-88",   water_depth_ft:1200, removal_completed:false, modification_app_count:0, latest_app_year:2013, has_approval:false, operator:"Ultra Deep Inc.", location:"GOM Block 88",  structure_type:"SPAR"    },
+  { platform_id:"J-14B",  water_depth_ft:88,   removal_completed:false, modification_app_count:8, latest_app_year:2024, has_approval:true,  operator:"Pelican Energy",  location:"GOM Block 14",  structure_type:"JACKET"  },
+  { platform_id:"K-200",  water_depth_ft:195,  removal_completed:true,  modification_app_count:2, latest_app_year:2020, has_approval:true,  operator:"Coastal Energy",  location:"GOM Block 200", structure_type:"COMPLEX" },
+  { platform_id:"L-33",   water_depth_ft:72,   removal_completed:false, modification_app_count:4, latest_app_year:2022, has_approval:true,  operator:"Delta Marine",    location:"GOM Block 33",  structure_type:"JACKET"  },
+  { platform_id:"M-500A", water_depth_ft:450,  removal_completed:false, modification_app_count:1, latest_app_year:2021, has_approval:false, operator:"Gulf Deep Ops",   location:"GOM Block 500", structure_type:"TLP"     },
+  { platform_id:"N-9",    water_depth_ft:45,   removal_completed:false, modification_app_count:5, latest_app_year:2024, has_approval:true,  operator:"Bayou Energy",    location:"GOM Block 9",   structure_type:"CAISSON" },
+  { platform_id:"O-77C",  water_depth_ft:185,  removal_completed:false, modification_app_count:3, latest_app_year:2023, has_approval:true,  operator:"GOM Partners",    location:"GOM Block 77",  structure_type:"JACKET"  },
+];
+
+// ────────────────────────────────────────────────────────────────
+//  STATE
+// ────────────────────────────────────────────────────────────────
+let config    = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+let platforms = [];
+let scored    = [];
+
+const CRIT_COLORS = ['#3b82f6','#22c55e','#f59e0b','#a855f7','#ef4444'];
+
+// ────────────────────────────────────────────────────────────────
+//  SCORING ENGINE
+// ────────────────────────────────────────────────────────────────
+function boolVal(v) {
+  if (typeof v === 'boolean') return v;
+  const s = String(v).toLowerCase().trim();
+  return s === 'true' || s === '1' || s === 'yes';
+}
+
+function scorePlatform(rec, cfg) {
+  const year = new Date().getFullYear();
+  let total = 0;
+  const breakdown = {};
+
+  for (const c of cfg.criteria) {
+    let pts = 0;
+    const raw = rec[c.field];
+
+    switch (c.logic) {
+      case 'binary': {
+        pts = boolVal(raw) ? (c.scoreIfTrue ?? 0) : (c.scoreIfFalse ?? 0);
+        break;
+      }
+      case 'range': {
+        const depth = parseFloat(raw) || 9999;
+        for (const t of c.thresholds) {
+          if (t.maxDepth === null || depth <= t.maxDepth) { pts = t.points; break; }
+        }
+        break;
+      }
+      case 'count': {
+        const count = parseInt(raw) || 0;
+        const desc = [...c.thresholds].sort((a, b) => b.minCount - a.minCount);
+        for (const t of desc) {
+          if (count >= t.minCount) { pts = t.points; break; }
+        }
+        break;
+      }
+      case 'recency': {
+        const appYear = parseInt(raw) || 0;
+        const age = appYear > 0 ? year - appYear : 9999;
+        for (const t of c.thresholds) {
+          if (t.withinYears === null || age <= t.withinYears) { pts = t.points; break; }
+        }
+        break;
+      }
+    }
+
+    breakdown[c.id] = { points: pts, max: c.maxPoints, label: c.label };
+    total += pts;
+  }
+
+  return { score: total, breakdown };
+}
+
+function getTier(score) {
+  if (score >= config.scoreThresholds.high.min)   return 'high';
+  if (score >= config.scoreThresholds.medium.min) return 'medium';
+  return 'low';
+}
+
+function rescore() {
+  scored = platforms.map(p => {
+    const r = scorePlatform(p, config);
+    return { ...p, score: r.score, breakdown: r.breakdown, tier: getTier(r.score) };
+  });
+  renderResults();
+}
+
+// ────────────────────────────────────────────────────────────────
+//  CSV PARSER
+// ────────────────────────────────────────────────────────────────
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/);
+  if (lines.length < 2) return [];
+  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, '').toLowerCase());
+  return lines.slice(1).filter(l => l.trim()).map(line => {
+    // Handle quoted commas simply
+    const vals = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+    const obj = {};
+    headers.forEach((h, i) => { obj[h] = vals[i] ?? ''; });
+    return obj;
+  });
+}
+
+// ────────────────────────────────────────────────────────────────
+//  RENDER RESULTS
+// ────────────────────────────────────────────────────────────────
+function renderResults() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const sort   = document.getElementById('sortSel').value;
+  const filter = document.getElementById('filterSel').value;
+
+  // stats
+  document.getElementById('statsBar').style.display = 'grid';
+  document.getElementById('controls').style.display  = 'flex';
+  document.getElementById('btnExport').style.display = '';
+  document.getElementById('stTotal').textContent = scored.length;
+  document.getElementById('stHigh').textContent  = scored.filter(p => p.tier === 'high').length;
+  document.getElementById('stMed').textContent   = scored.filter(p => p.tier === 'medium').length;
+  document.getElementById('stLow').textContent   = scored.filter(p => p.tier === 'low').length;
+  const avg = scored.length ? Math.round(scored.reduce((s, p) => s + p.score, 0) / scored.length) : 0;
+  document.getElementById('stAvg').textContent = avg;
+
+  // filter / search
+  let items = [...scored];
+  if (filter !== 'all') items = items.filter(p => p.tier === filter);
+  if (search) items = items.filter(p =>
+    (p.platform_id || '').toLowerCase().includes(search) ||
+    (p.operator    || '').toLowerCase().includes(search) ||
+    (p.location    || '').toLowerCase().includes(search) ||
+    (p.structure_type || '').toLowerCase().includes(search)
+  );
+
+  // sort
+  const sorts = {
+    'score-desc': (a,b) => b.score - a.score,
+    'score-asc':  (a,b) => a.score - b.score,
+    'id-asc':     (a,b) => (a.platform_id||'').localeCompare(b.platform_id||''),
+    'depth-asc':  (a,b) => (parseFloat(a.water_depth_ft)||0) - (parseFloat(b.water_depth_ft)||0),
+    'depth-desc': (a,b) => (parseFloat(b.water_depth_ft)||0) - (parseFloat(a.water_depth_ft)||0),
+  };
+  items.sort(sorts[sort] || sorts['score-desc']);
+
+  const container = document.getElementById('platformList');
+
+  if (!items.length) {
+    container.innerHTML = `<div class="empty-state"><div class="icon">🔍</div><h3>No results</h3><p>Try adjusting your search or filter.</p></div>`;
+    return;
+  }
+
+  const tierLabel = t => config.scoreThresholds[t]?.label || t;
+
+  let html = `<table class="platform-table">
+    <thead><tr>
+      <th style="width:38px">#</th>
+      <th>Platform</th>
+      <th style="width:170px">Score</th>
+      <th>Breakdown</th>
+      <th>Depth</th>
+      <th>Status</th>
+    </tr></thead>
+    <tbody>`;
+
+  items.forEach((p, i) => {
+    const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+    const depth = parseFloat(p.water_depth_ft);
+    const depthTxt = isNaN(depth) ? '—' : `${depth.toFixed(0)} ft`;
+    const removed = boolVal(p.removal_completed);
+    const statusTag = removed
+      ? `<span class="tag red">Removed</span>`
+      : `<span class="tag green">Pending</span>`;
+
+    const bars = config.criteria.map((c, ci) => {
+      const b = p.breakdown[c.id] || { points: 0, max: c.maxPoints };
+      const pct = b.max > 0 ? (b.points / b.max) * 100 : 0;
+      const col = CRIT_COLORS[ci % CRIT_COLORS.length];
+      return `<div class="bk-item">
+        <div class="bk-label" title="${c.label}">${c.label}</div>
+        <div class="bk-track"><div class="bk-fill" style="width:${pct}%;background:${col}"></div></div>
+        <div class="bk-pts">${b.points}</div>
+      </div>`;
+    }).join('');
+
+    const meta = [p.operator, p.location, p.structure_type].filter(Boolean).join(' · ');
+
+    html += `<tr class="platform-row">
+      <td><div class="rank-badge ${rankClass}">${i + 1}</div></td>
+      <td>
+        <div class="platform-id">${p.platform_id || p.name || '—'}</div>
+        ${meta ? `<div class="platform-meta">${meta}</div>` : ''}
+      </td>
+      <td>
+        <div class="score-cell">
+          <div class="score-num ${p.tier}">${p.score}</div>
+          <span class="tier-badge ${p.tier}">${tierLabel(p.tier)}</span>
+        </div>
+      </td>
+      <td><div class="breakdown">${bars}</div></td>
+      <td style="font-size:13px;color:var(--text-secondary)">${depthTxt}</td>
+      <td>${statusTag}</td>
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+// ────────────────────────────────────────────────────────────────
+//  CRITERIA EDITOR
+// ────────────────────────────────────────────────────────────────
+function renderEditor() {
+  const total = config.criteria.reduce((s, c) => s + c.maxPoints, 0);
+
+  // weight gauge
+  const pct = Math.min((total / 100) * 100, 100);
+  document.getElementById('wgFill').style.width      = pct + '%';
+  document.getElementById('wgFill').style.background = total === 100 ? 'var(--green)' : (total > 100 ? 'var(--red)' : 'var(--yellow)');
+  document.getElementById('wgTotal').textContent     = total + ' / 100 pts';
+  document.getElementById('wgTotal').style.color     = total === 100 ? 'var(--green)' : 'var(--red)';
+
+  const editor = document.getElementById('criteriaEditor');
+  editor.innerHTML = config.criteria.map((c, ci) => {
+    const color = CRIT_COLORS[ci % CRIT_COLORS.length];
+    const barPct = Math.min((c.maxPoints / 100) * 100, 100);
+
+    let threshHTML = '';
+    if (c.logic === 'binary') {
+      threshHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px">
+          <div class="thresh-item">
+            <div class="thresh-cond">If <code>${c.field}</code> = TRUE</div>
+            <input class="num-input-sm" type="number" min="0" value="${c.scoreIfTrue ?? 0}"
+              onchange="updateBinary('${c.id}','scoreIfTrue',this.value)">
+          </div>
+          <div class="thresh-item">
+            <div class="thresh-cond">If <code>${c.field}</code> = FALSE</div>
+            <input class="num-input-sm" type="number" min="0" value="${c.scoreIfFalse ?? 0}"
+              onchange="updateBinary('${c.id}','scoreIfFalse',this.value)">
+          </div>
+        </div>`;
+    } else if (c.thresholds) {
+      threshHTML = `
+        <div style="font-size:10px;color:var(--text-muted);margin-top:8px;margin-bottom:5px">Points per threshold:</div>
+        <div class="thresh-grid">
+          ${c.thresholds.map((t, ti) => `
+            <div class="thresh-item">
+              <div class="thresh-cond">${t.condition}</div>
+              <input class="num-input-sm" type="number" min="0" value="${t.points}"
+                onchange="updateThreshold('${c.id}',${ti},this.value)">
+            </div>`).join('')}
+        </div>`;
+    }
+
+    return `<div class="crit-card">
+      <div class="crit-head">
+        <div class="crit-stripe" style="background:${color}"></div>
+        <div class="crit-body">
+          <div class="crit-title">
+            ${c.label}
+            <span class="crit-logic-pill">${c.logic}</span>
+          </div>
+          <div class="crit-desc">${c.description}</div>
+          <div class="crit-high" style="color:${color}">✓ High score: ${c.highScoringCase}</div>
+        </div>
+        <div class="crit-controls">
+          <input class="num-input" type="number" min="0" max="200" value="${c.maxPoints}"
+            onchange="updateMaxPts('${c.id}',this.value)">
+          <span class="pts-label">max&nbsp;pts</span>
+        </div>
+      </div>
+      <div class="crit-bar">
+        <div class="crit-bar-fill" style="width:${barPct}%;background:${color}"></div>
+      </div>
+      ${threshHTML}
+      <div style="margin-top:8px;font-size:10px;color:var(--text-muted)">
+        CSV field: <span class="field-badge">${c.field}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updateMaxPts(id, val) {
+  const c = config.criteria.find(c => c.id === id);
+  if (c) c.maxPoints = parseInt(val) || 0;
+  renderEditor();
+  syncJSON();
+  if (platforms.length) rescore();
+}
+function updateThreshold(id, ti, val) {
+  const c = config.criteria.find(c => c.id === id);
+  if (c && c.thresholds[ti]) c.thresholds[ti].points = parseInt(val) || 0;
+  syncJSON();
+  if (platforms.length) rescore();
+}
+function updateBinary(id, field, val) {
+  const c = config.criteria.find(c => c.id === id);
+  if (c) c[field] = parseInt(val) || 0;
+  syncJSON();
+  if (platforms.length) rescore();
+}
+
+function syncJSON() {
+  document.getElementById('jsonView').textContent = JSON.stringify(config, null, 2);
+}
+
+// ────────────────────────────────────────────────────────────────
+//  MODAL HELPERS
+// ────────────────────────────────────────────────────────────────
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// Philosophy modal
+document.getElementById('btnPhilosophy').onclick = () => {
+  renderEditor(); syncJSON(); openModal('modalPhilosophy');
+};
+document.getElementById('btnClosePhil').onclick  = () => closeModal('modalPhilosophy');
+document.getElementById('modalPhilosophy').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeModal('modalPhilosophy');
+});
+
+// Load data modal
+document.getElementById('btnLoadData').onclick  = () => openModal('modalLoad');
+document.getElementById('btnLoadData2').onclick = () => openModal('modalLoad');
+document.getElementById('btnCloseLoad').onclick = () => closeModal('modalLoad');
+document.getElementById('btnCancelLoad').onclick= () => closeModal('modalLoad');
+document.getElementById('modalLoad').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeModal('modalLoad');
+});
+
+// Tabs
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.onclick = () => {
+    const parent = tab.closest('.modal-body');
+    parent.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const which = tab.dataset.tab;
+    parent.querySelector('#tabVisual').style.display = which === 'visual' ? '' : 'none';
+    parent.querySelector('#tabJSON').style.display   = which === 'json'   ? '' : 'none';
+    if (which === 'json') syncJSON();
+  };
+});
+
+// ────────────────────────────────────────────────────────────────
+//  SAMPLE DATA
+// ────────────────────────────────────────────────────────────────
+function loadSample() {
+  platforms = SAMPLE_PLATFORMS;
+  rescore();
+}
+document.getElementById('btnSample').onclick  = loadSample;
+document.getElementById('btnSample2').onclick = loadSample;
+
+// ────────────────────────────────────────────────────────────────
+//  CSV LOAD
+// ────────────────────────────────────────────────────────────────
+function ingestCSV(text) {
+  platforms = parseCSV(text);
+  rescore();
+  closeModal('modalLoad');
+  document.getElementById('csvPaste').value = '';
+}
+
+document.getElementById('btnProcessCSV').onclick = () => {
+  const pasted = document.getElementById('csvPaste').value.trim();
+  if (pasted) { ingestCSV(pasted); return; }
+  document.getElementById('fileCSV').click();
+};
+
+document.getElementById('fileCSV').onchange = e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = ev => ingestCSV(ev.target.result);
+  r.readAsText(f);
+  e.target.value = '';
+};
+
+// drag-drop
+const ua = document.getElementById('uploadArea');
+ua.onclick = () => document.getElementById('fileCSV').click();
+ua.ondragover = e => { e.preventDefault(); ua.classList.add('over'); };
+ua.ondragleave = () => ua.classList.remove('over');
+ua.ondrop = e => {
+  e.preventDefault(); ua.classList.remove('over');
+  const f = e.dataTransfer.files[0];
+  if (f) { const r = new FileReader(); r.onload = ev => ingestCSV(ev.target.result); r.readAsText(f); }
+};
+
+// ────────────────────────────────────────────────────────────────
+//  JSON CONFIG IMPORT / EXPORT
+// ────────────────────────────────────────────────────────────────
+document.getElementById('btnExportJSON').onclick = () => {
+  const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'reuse_scoring_config.json';
+  a.click();
+};
+
+document.getElementById('btnImportJSON').onclick = () => document.getElementById('fileJSON').click();
+
+document.getElementById('fileJSON').onchange = e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    try {
+      config = JSON.parse(ev.target.result);
+      renderEditor(); syncJSON();
+      if (platforms.length) rescore();
+    } catch { alert('Invalid JSON config file.'); }
+  };
+  r.readAsText(f);
+  e.target.value = '';
+};
+
+document.getElementById('btnResetConfig').onclick = () => {
+  if (confirm('Reset scoring to default criteria?')) {
+    config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+    renderEditor(); syncJSON();
+    if (platforms.length) rescore();
+  }
+};
+
+// ────────────────────────────────────────────────────────────────
+//  EXPORT RESULTS CSV
+// ────────────────────────────────────────────────────────────────
+document.getElementById('btnExport').onclick = () => {
+  const cols = ['rank','platform_id','score','tier','water_depth_ft',
+                'removal_completed','modification_app_count','latest_app_year',
+                'has_approval','operator','location','structure_type'];
+  const rows = scored.map((p, i) =>
+    cols.map(h => h === 'rank' ? i + 1 : (p[h] ?? '')).join(',')
+  );
+  const csv = [cols.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'platform_reuse_scores.csv';
+  a.click();
+};
+
+// ────────────────────────────────────────────────────────────────
+//  CONTROLS
+// ────────────────────────────────────────────────────────────────
+document.getElementById('searchInput').oninput  = renderResults;
+document.getElementById('sortSel').onchange     = renderResults;
+document.getElementById('filterSel').onchange   = renderResults;
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closeModal('modalPhilosophy');
+    closeModal('modalLoad');
+  }
+});
+
+// ── Boot with sample data ────────────────────────────────────────
+loadSample();
+</script>
+</body>
+</html>

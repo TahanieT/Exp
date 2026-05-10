@@ -1,0 +1,94 @@
+{
+  "version": "1.0",
+  "name": "AOL Platform Reuse Scoring",
+  "description": "Scoring criteria for evaluating offshore platforms for reuse potential. Scores sum to 100 points. Higher score = stronger reuse candidate.",
+  "source": "ReuseScoreLogic.csv",
+  "criteria": [
+    {
+      "id": "pending_removal",
+      "label": "Pending Removal",
+      "maxPoints": 40,
+      "description": "Whether removal is still pending (not yet completed). Unremoved structures retain reuse opportunity.",
+      "highScoringCase": "Not yet removed",
+      "logic": "binary",
+      "field": "removal_completed",
+      "scoreIfFalse": 40,
+      "scoreIfTrue": 0,
+      "_note": "removal_completed=false means still pending => full 40 pts"
+    },
+    {
+      "id": "water_depth",
+      "label": "Water Depth",
+      "maxPoints": 25,
+      "description": "Shallower water = lower cost, easier access, wider reuse market. Scored in tiers by feet.",
+      "highScoringCase": "< 100–200 ft",
+      "logic": "range",
+      "field": "water_depth_ft",
+      "thresholds": [
+        { "condition": "≤ 100 ft",  "maxDepth": 100,  "points": 25 },
+        { "condition": "≤ 200 ft",  "maxDepth": 200,  "points": 18 },
+        { "condition": "≤ 400 ft",  "maxDepth": 400,  "points": 10 },
+        { "condition": "≤ 1000 ft", "maxDepth": 1000, "points": 4  },
+        { "condition": "> 1000 ft", "maxDepth": null,  "points": 0  }
+      ],
+      "_note": "Evaluated top-down; first matching threshold wins"
+    },
+    {
+      "id": "modification_apps",
+      "label": "Modification Applications",
+      "maxPoints": 20,
+      "description": "Count of MODIFICATION applications (not initial). More modifications = active operational interest and higher reuse likelihood.",
+      "highScoringCase": "Many MODIFICATION applications",
+      "logic": "count",
+      "field": "modification_app_count",
+      "thresholds": [
+        { "condition": "≥ 5 apps", "minCount": 5, "points": 20 },
+        { "condition": "≥ 3 apps", "minCount": 3, "points": 15 },
+        { "condition": "≥ 1 app",  "minCount": 1, "points": 8  },
+        { "condition": "0 apps",   "minCount": 0, "points": 0  }
+      ],
+      "_note": "Evaluated highest-to-lowest minCount; first matching threshold wins"
+    },
+    {
+      "id": "recent_activity",
+      "label": "Recent Activity",
+      "maxPoints": 10,
+      "description": "How recent the latest removal application is. Recent activity signals ongoing regulatory engagement and reuse relevance.",
+      "highScoringCase": "Application within last 2 years",
+      "logic": "recency",
+      "field": "latest_app_year",
+      "thresholds": [
+        { "condition": "≤ 2 yrs ago",  "withinYears": 2,   "points": 10 },
+        { "condition": "≤ 5 yrs ago",  "withinYears": 5,   "points": 7  },
+        { "condition": "≤ 10 yrs ago", "withinYears": 10,  "points": 3  },
+        { "condition": "> 10 yrs ago", "withinYears": null, "points": 0  }
+      ],
+      "_note": "Age = currentYear - latest_app_year; evaluated top-down"
+    },
+    {
+      "id": "approval_record",
+      "label": "Approval Record",
+      "maxPoints": 5,
+      "description": "Has a formal approval on record (approved: true). Indicates positive regulatory standing.",
+      "highScoringCase": "Has formal approval",
+      "logic": "binary",
+      "field": "has_approval",
+      "scoreIfTrue": 5,
+      "scoreIfFalse": 0
+    }
+  ],
+  "scoreThresholds": {
+    "high":   { "min": 70, "label": "Strong Reuse Candidate", "color": "#22c55e" },
+    "medium": { "min": 40, "label": "Moderate Candidate",     "color": "#f59e0b" },
+    "low":    { "min": 0,  "label": "Low Priority",           "color": "#ef4444" }
+  },
+  "totalMaxPoints": 100,
+  "fieldMapping": {
+    "platform_id":             "Unique platform / structure identifier",
+    "water_depth_ft":          "Water depth at platform location in feet",
+    "removal_completed":       "Boolean — true if removal has been completed",
+    "modification_app_count":  "Integer — number of MODIFICATION-type applications filed",
+    "latest_app_year":         "Integer year of the most recent removal application",
+    "has_approval":            "Boolean — true if a formal approval is on record"
+  }
+}
