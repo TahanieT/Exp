@@ -46,7 +46,12 @@ app.use(function(req, res, next){
    res.locals.success=req.flash("success");
    next();
 });
-mongoose.connect(process.env.YELPDATABASEURL);
+if (process.env.YELPDATABASEURL) {
+    mongoose.connect(process.env.YELPDATABASEURL);
+    mongoose.connection.on('error', function(err){
+        console.warn('MongoDB connection error (non-fatal):', err.message);
+    });
+}
 //mongoose.connect("mongodb://localhost/yelp-camp", {useMongoClient: true});
 //mongoose.connect("mongodb://tbt:password@ds053459.mlab.com:53459/tbt-yelpcamp");
 //mongoose.Promise = global.Promise; 
