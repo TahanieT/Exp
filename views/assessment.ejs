@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Offshore Facility Reuse Assessment</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <style>
+    body { background: #f4f6f9; font-family: 'Segoe UI', Arial, sans-serif; }
+
+    .tool-header {
+      background: linear-gradient(135deg, #1a3a5c 0%, #0d6efd 100%);
+      color: #fff;
+      padding: 32px 0 24px;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .tool-header h1 { font-size: 28px; font-weight: 700; margin: 0 0 6px; }
+    .tool-header p  { margin: 0; opacity: 0.85; font-size: 14px; }
+
+    /* Step navigation */
+    .step-nav { display: flex; margin-bottom: 30px; }
+    .step-nav .step {
+      flex: 1; text-align: center; padding: 12px 6px;
+      background: #fff; border: 2px solid #d0d7de;
+      font-size: 13px; font-weight: 600; color: #6c757d;
+      position: relative; cursor: default;
+    }
+    .step-nav .step:not(:last-child)::after {
+      content: ''; position: absolute; right: -14px; top: 50%;
+      transform: translateY(-50%);
+      border: 14px solid transparent;
+      border-left-color: #d0d7de; z-index: 1;
+    }
+    .step-nav .step.active  { background: #1a3a5c; color: #fff; border-color: #1a3a5c; }
+    .step-nav .step.done    { background: #198754; color: #fff; border-color: #198754; }
+    .step-nav .step.active::after { border-left-color: #1a3a5c !important; }
+    .step-nav .step.done::after   { border-left-color: #198754 !important; }
+
+    /* Cards */
+    .card {
+      background: #fff; border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1); margin-bottom: 24px;
+      overflow: hidden;
+    }
+    .card-header {
+      padding: 14px 20px; font-weight: 700; font-size: 15px;
+      display: flex; align-items: center; gap: 10px;
+      background: #f8f9fa; border-bottom: 1px solid #e9ecef;
+    }
+    .card-header .cat-icon { font-size: 20px; }
+    .card-body { padding: 20px; }
+
+    /* Weight control */
+    .weight-row {
+      display: flex; align-items: center; gap: 12px;
+      background: #eef2ff; border-radius: 6px; padding: 8px 12px;
+      margin-bottom: 18px;
+    }
+    .weight-row label { margin: 0; font-size: 13px; font-weight: 600; flex: 1; }
+    .weight-row input[type=range] { flex: 2; }
+    .weight-badge {
+      background: #1a3a5c; color: #fff; border-radius: 4px;
+      padding: 2px 8px; font-size: 13px; font-weight: 700; min-width: 40px; text-align: center;
+    }
+
+    /* Criterion rows */
+    .criterion-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 0; border-bottom: 1px solid #f0f0f0;
+    }
+    .criterion-row:last-child { border-bottom: none; }
+    .criterion-label { flex: 1; font-size: 13px; }
+    .rating-group { display: flex; gap: 4px; }
+    .rating-btn {
+      width: 36px; height: 36px; border-radius: 50%; border: 2px solid #d0d7de;
+      background: #fff; font-size: 12px; font-weight: 700; cursor: pointer;
+      transition: all 0.15s; color: #555; line-height: 32px; text-align: center; padding: 0;
+    }
+    .rating-btn:hover { border-color: #1a3a5c; color: #1a3a5c; }
+    .rating-btn.sel-1 { background: #dc3545; border-color: #dc3545; color: #fff; }
+    .rating-btn.sel-2 { background: #fd7e14; border-color: #fd7e14; color: #fff; }
+    .rating-btn.sel-3 { background: #ffc107; border-color: #ffc107; color: #222; }
+    .rating-btn.sel-4 { background: #20c997; border-color: #20c997; color: #fff; }
+    .rating-btn.sel-5 { background: #198754; border-color: #198754; color: #fff; }
+    .score-pill {
+      min-width: 44px; text-align: center; font-size: 11px; font-weight: 600;
+      padding: 2px 6px; border-radius: 10px; background: #e9ecef; color: #555;
+    }
+
+    /* Live score bar */
+    .cat-score-bar { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
+    .bar-track { flex: 1; height: 10px; background: #e9ecef; border-radius: 5px; overflow: hidden; }
+    .bar-fill   { height: 100%; border-radius: 5px; transition: width 0.3s, background 0.3s; }
+    .cat-pct    { font-size: 13px; font-weight: 700; min-width: 36px; text-align: right; }
+
+    /* Overall score */
+    .overall-widget {
+      background: linear-gradient(135deg, #1a3a5c, #2563eb);
+      color: #fff; border-radius: 12px; padding: 28px;
+      text-align: center; margin-bottom: 24px;
+    }
+    .overall-widget .big-score { font-size: 72px; font-weight: 900; line-height: 1; }
+    .overall-widget .verdict {
+      display: inline-block; margin-top: 10px; padding: 6px 22px;
+      border-radius: 20px; font-size: 18px; font-weight: 700;
+    }
+    .verdict-go   { background: #198754; }
+    .verdict-cond { background: #ffc107; color: #222; }
+    .verdict-nogo { background: #dc3545; }
+
+    /* Result table */
+    .result-table { width: 100%; border-collapse: collapse; }
+    .result-table th { background: #1a3a5c; color: #fff; padding: 10px 14px; font-size: 13px; }
+    .result-table td { padding: 9px 14px; font-size: 13px; border-bottom: 1px solid #e9ecef; }
+    .result-table tr:last-child td { border-bottom: none; }
+    .rag { display: inline-block; width: 14px; height: 14px; border-radius: 50%; vertical-align: middle; margin-right: 5px; }
+    .rag-g { background: #198754; }
+    .rag-a { background: #ffc107; }
+    .rag-r { background: #dc3545; }
+
+    /* Criterion detail table in report */
+    .detail-section { margin-bottom: 20px; }
+    .detail-section h5 { font-weight: 700; margin-bottom: 8px; }
+
+    /* Helpers */
+    .hidden { display: none !important; }
+    .btn-primary-custom {
+      background: #1a3a5c; border-color: #1a3a5c; color: #fff;
+      padding: 10px 28px; font-size: 15px; border-radius: 6px;
+      border: none; cursor: pointer; transition: background 0.2s;
+    }
+    .btn-primary-custom:hover { background: #14304d; }
+    .btn-secondary-custom {
+      background: #6c757d; border-color: #6c757d; color: #fff;
+      padding: 10px 28px; font-size: 15px; border-radius: 6px;
+      border: none; cursor: pointer; transition: background 0.2s; margin-right: 8px;
+    }
+    .btn-secondary-custom:hover { background: #5a6268; }
+    .btn-print {
+      background: #198754; color: #fff; border: none;
+      padding: 10px 24px; font-size: 14px; border-radius: 6px; cursor: pointer;
+    }
+    .form-control-sm { font-size: 13px; padding: 6px 10px; }
+    .section-label { font-size: 11px; text-transform: uppercase; letter-spacing: .8px; color: #6c757d; font-weight: 700; margin-bottom: 6px; }
+    .rating-legend { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+    .legend-item { font-size: 11px; display: flex; align-items: center; gap: 4px; }
+    .legend-dot { width: 12px; height: 12px; border-radius: 50%; }
+
+    @media print {
+      .no-print { display: none !important; }
+      body { background: #fff; }
+      .tool-header { background: #1a3a5c !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .overall-widget { background: #1a3a5c !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="tool-header no-print">
+  <div class="container">
+    <h1>&#9875; Offshore Facility Reuse Assessment</h1>
+    <p>Weighted scorecard tool &mdash; evaluate existing offshore facilities for production or test reuse candidacy</p>
+  </div>
+</div>
+
+<div class="container" style="max-width:900px; padding-bottom:60px;">
+
+  <!-- Step nav -->
+  <div class="step-nav no-print" id="stepNav">
+    <div class="step active" id="nav1">1 &nbsp; Facility Info</div>
+    <div class="step" id="nav2">2 &nbsp; Assessment</div>
+    <div class="step" id="nav3">3 &nbsp; Report</div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       STEP 1 — Facility Info
+  ════════════════════════════════════════════════ -->
+  <div id="step1">
+    <div class="card">
+      <div class="card-header">Facility Information</div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-sm-6">
+            <div class="form-group">
+              <label class="section-label">Facility Name / ID</label>
+              <input type="text" id="facilityName" class="form-control form-control-sm" placeholder="e.g. Platform Alpha, FPSO Triton">
+            </div>
+          </div>
+          <div class="col-sm-6">
+            <div class="form-group">
+              <label class="section-label">Facility Type</label>
+              <select id="facilityType" class="form-control form-control-sm">
+                <option value="">— select —</option>
+                <option>Fixed Platform (Jacket)</option>
+                <option>Fixed Platform (Gravity Base)</option>
+                <option>FPSO</option>
+                <option>FSO</option>
+                <option>Semi-submersible</option>
+                <option>Tension Leg Platform (TLP)</option>
+                <option>SPAR</option>
+                <option>Subsea Tie-back Hub</option>
+                <option>Offshore Test Facility</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-sm-4">
+            <div class="form-group">
+              <label class="section-label">Current Location / Field</label>
+              <input type="text" id="facilityLocation" class="form-control form-control-sm" placeholder="e.g. North Sea Block 22/14">
+            </div>
+          </div>
+          <div class="col-sm-4">
+            <div class="form-group">
+              <label class="section-label">Year Installed</label>
+              <input type="number" id="facilityYear" class="form-control form-control-sm" placeholder="e.g. 1998" min="1960" max="2024">
+            </div>
+          </div>
+          <div class="col-sm-4">
+            <div class="form-group">
+              <label class="section-label">Design Life (years)</label>
+              <input type="number" id="facilityDesignLife" class="form-control form-control-sm" placeholder="e.g. 25" min="1" max="60">
+            </div>
+          </div>
+          <div class="col-sm-6">
+            <div class="form-group">
+              <label class="section-label">Proposed Reuse Field / Location</label>
+              <input type="text" id="targetLocation" class="form-control form-control-sm" placeholder="e.g. West of Shetland Block 204/22">
+            </div>
+          </div>
+          <div class="col-sm-6">
+            <div class="form-group">
+              <label class="section-label">Assessed By</label>
+              <input type="text" id="assessedBy" class="form-control form-control-sm" placeholder="Name / Team">
+            </div>
+          </div>
+          <div class="col-sm-12">
+            <div class="form-group">
+              <label class="section-label">Notes / Context</label>
+              <textarea id="facilityNotes" class="form-control form-control-sm" rows="2" placeholder="Any relevant background for this assessment..."></textarea>
+            </div>
+          </div>
+        </div>
+        <div style="text-align:right; margin-top:10px;">
+          <button class="btn-primary-custom" onclick="goStep(2)">Next: Assessment &rarr;</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       STEP 2 — Assessment Form
+  ════════════════════════════════════════════════ -->
+  <div id="step2" class="hidden">
+
+    <div class="alert alert-info" style="font-size:13px; margin-bottom:20px;">
+      <strong>Instructions:</strong> Rate each criterion 1&ndash;5 using the score buttons.
+      Adjust category weights using the sliders (must total 100%). Scores update live as you go.
+      <div class="rating-legend" style="margin-top:8px; margin-bottom:0;">
+        <span class="legend-item"><span class="legend-dot" style="background:#dc3545"></span>1 Very Poor</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#fd7e14"></span>2 Poor</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#ffc107"></span>3 Fair</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#20c997"></span>4 Good</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#198754"></span>5 Excellent</span>
+      </div>
+    </div>
+
+    <!-- Live total weight indicator -->
+    <div id="weightWarning" class="alert alert-warning hidden" style="font-size:13px; margin-bottom:16px;">
+      &#9888; Category weights must sum to 100%. Current total: <strong id="weightTotal">100</strong>%.
+    </div>
+
+    <!-- Categories rendered by JS -->
+    <div id="categoriesContainer"></div>
+
+    <div style="margin-top:20px; display:flex; justify-content:space-between; align-items:center;">
+      <button class="btn-secondary-custom" onclick="goStep(1)">&larr; Back</button>
+      <button class="btn-primary-custom" id="btnGenerateReport" onclick="generateReport()">Generate Report &rarr;</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       STEP 3 — Report
+  ════════════════════════════════════════════════ -->
+  <div id="step3" class="hidden">
+
+    <!-- Print header (only shows on print) -->
+    <div style="display:none;" class="print-only" id="printHeader">
+      <h2 style="color:#1a3a5c;">Offshore Facility Reuse Assessment Report</h2>
+      <p id="printMeta" style="font-size:13px; color:#555;"></p>
+      <hr>
+    </div>
+
+    <div class="overall-widget">
+      <div style="font-size:14px; opacity:.85; margin-bottom:6px; text-transform:uppercase; letter-spacing:1px;">Overall Reuse Score</div>
+      <div class="big-score" id="rptScore">—</div>
+      <div style="font-size:13px; opacity:.7; margin: 4px 0 10px;">out of 100</div>
+      <div class="verdict" id="rptVerdict">—</div>
+      <div style="font-size:12px; opacity:.75; margin-top:10px;" id="rptVerdictSub"></div>
+    </div>
+
+    <!-- Facility summary -->
+    <div class="card" id="rptFacilitySummary">
+      <div class="card-header">Facility Summary</div>
+      <div class="card-body" id="rptFacilityBody" style="font-size:13px;"></div>
+    </div>
+
+    <!-- Category scorecard -->
+    <div class="card">
+      <div class="card-header">Category Scorecard</div>
+      <div class="card-body" style="padding:0;">
+        <table class="result-table">
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th>Weight</th>
+              <th>Raw Score</th>
+              <th>Weighted Contribution</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="rptCatTable"></tbody>
+          <tfoot>
+            <tr style="background:#f8f9fa; font-weight:700;">
+              <td colspan="3">Total</td>
+              <td id="rptTotal">—</td>
+              <td id="rptRag">—</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- Criterion detail -->
+    <div class="card">
+      <div class="card-header">Criterion Detail</div>
+      <div class="card-body" id="rptCritDetail"></div>
+    </div>
+
+    <!-- Recommendations -->
+    <div class="card">
+      <div class="card-header">Recommendations</div>
+      <div class="card-body" id="rptRecommendations" style="font-size:13px;"></div>
+    </div>
+
+    <div class="no-print" style="display:flex; justify-content:space-between; margin-top:10px;">
+      <button class="btn-secondary-custom" onclick="goStep(2)">&larr; Revise Assessment</button>
+      <button class="btn-print" onclick="window.print()">&#128438; Print / Save PDF</button>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+// ─── Data Model ────────────────────────────────────────────────────────────
+var CATEGORIES = [
+  {
+    id: 'structural',
+    label: 'Structural Integrity',
+    icon: '🏗️',
+    weight: 25,
+    criteria: [
+      'Hull / deck structural condition',
+      'Mooring system condition',
+      'Remaining fatigue life estimate',
+      'Last major inspection result',
+      'Corrosion protection status'
+    ]
+  },
+  {
+    id: 'process',
+    label: 'Process Equipment',
+    icon: '⚙️',
+    weight: 25,
+    criteria: [
+      'Separation train condition',
+      'Compression equipment status',
+      'Utilities condition (power, water treatment)',
+      'Instrumentation & control systems',
+      'Safety systems (F&G, ESD) status'
+    ]
+  },
+  {
+    id: 'regulatory',
+    label: 'Regulatory & Certification',
+    icon: '📋',
+    weight: 20,
+    criteria: [
+      'Class society certification status',
+      'Flag state compliance',
+      'Environmental permits transferability',
+      'Safety case / SEMS currency',
+      'Remaining certification life'
+    ]
+  },
+  {
+    id: 'logistics',
+    label: 'Location & Logistics',
+    icon: '🗺️',
+    weight: 15,
+    criteria: [
+      'Water depth compatibility with new field',
+      'Distance / tow or move feasibility',
+      'Met-ocean environment compatibility',
+      'Port / quayside mobilisation access',
+      'Supply chain & crew-change accessibility'
+    ]
+  },
+  {
+    id: 'condition',
+    label: 'Overall Condition',
+    icon: '🔍',
+    weight: 15,
+    criteria: [
+      'Age vs. design life remaining',
+      'Maintenance backlog level',
+      'HAZID / HAZOP currency',
+      'OEM documentation & drawings availability',
+      'Modification history complexity'
+    ]
+  }
+];
+
+// scores[catId][critIdx] = 1-5 or null
+var scores = {};
+CATEGORIES.forEach(function(c){
+  scores[c.id] = new Array(c.criteria.length).fill(null);
+});
+
+// ─── Render Step 2 ─────────────────────────────────────────────────────────
+function renderCategories() {
+  var container = document.getElementById('categoriesContainer');
+  container.innerHTML = '';
+
+  CATEGORIES.forEach(function(cat, ci) {
+    var div = document.createElement('div');
+    div.className = 'card';
+    div.id = 'cat-card-' + cat.id;
+
+    var criteriaHTML = cat.criteria.map(function(crit, ki) {
+      return '<div class="criterion-row" id="cr-' + cat.id + '-' + ki + '">' +
+        '<span class="criterion-label">' + crit + '</span>' +
+        '<div class="rating-group">' +
+          [1,2,3,4,5].map(function(v) {
+            return '<button class="rating-btn" id="rb-' + cat.id + '-' + ki + '-' + v + '" ' +
+              'onclick="setScore(\'' + cat.id + '\',' + ki + ',' + v + ')" title="' + ratingLabel(v) + '">' + v + '</button>';
+          }).join('') +
+        '</div>' +
+        '<span class="score-pill" id="sp-' + cat.id + '-' + ki + '">—</span>' +
+      '</div>';
+    }).join('');
+
+    div.innerHTML =
+      '<div class="card-header">' +
+        '<span class="cat-icon">' + cat.icon + '</span>' + cat.label +
+      '</div>' +
+      '<div class="card-body">' +
+        '<div class="weight-row">' +
+          '<label>Category weight</label>' +
+          '<input type="range" min="0" max="60" step="5" value="' + cat.weight + '" ' +
+            'id="w-' + cat.id + '" onchange="updateWeight(\'' + cat.id + '\', this.value)" ' +
+            'oninput="updateWeight(\'' + cat.id + '\', this.value)">' +
+          '<span class="weight-badge" id="wb-' + cat.id + '">' + cat.weight + '%</span>' +
+        '</div>' +
+        criteriaHTML +
+        '<div class="cat-score-bar">' +
+          '<span style="font-size:12px; font-weight:600; color:#555; min-width:85px">Category score:</span>' +
+          '<div class="bar-track"><div class="bar-fill" id="bf-' + cat.id + '" style="width:0%;background:#e9ecef"></div></div>' +
+          '<span class="cat-pct" id="cp-' + cat.id + '">—</span>' +
+        '</div>' +
+      '</div>';
+
+    container.appendChild(div);
+  });
+}
+
+function ratingLabel(v) {
+  return ['','Very Poor','Poor','Fair','Good','Excellent'][v];
+}
+
+function ratingColor(v) {
+  return ['','#dc3545','#fd7e14','#ffc107','#20c997','#198754'][v];
+}
+
+// ─── Scoring logic ─────────────────────────────────────────────────────────
+function setScore(catId, critIdx, value) {
+  scores[catId][critIdx] = value;
+  // Update button styles
+  for (var v = 1; v <= 5; v++) {
+    var btn = document.getElementById('rb-' + catId + '-' + critIdx + '-' + v);
+    btn.className = 'rating-btn' + (v === value ? ' sel-' + v : '');
+  }
+  // Update score pill
+  var pill = document.getElementById('sp-' + catId + '-' + critIdx);
+  pill.textContent = ratingLabel(value);
+  pill.style.background = ratingColor(value);
+  pill.style.color = value === 3 ? '#222' : '#fff';
+  updateCategoryBar(catId);
+  updateWeightWarning();
+}
+
+function catAvgPct(cat) {
+  var vals = scores[cat.id].filter(function(v){ return v !== null; });
+  if (!vals.length) return null;
+  var avg = vals.reduce(function(a,b){ return a+b; }, 0) / vals.length;
+  return Math.round((avg / 5) * 100);
+}
+
+function updateCategoryBar(catId) {
+  var cat = CATEGORIES.find(function(c){ return c.id === catId; });
+  var pct = catAvgPct(cat);
+  var fill = document.getElementById('bf-' + catId);
+  var label = document.getElementById('cp-' + catId);
+  if (pct === null) {
+    fill.style.width = '0%'; fill.style.background = '#e9ecef';
+    label.textContent = '—';
+  } else {
+    fill.style.width = pct + '%';
+    fill.style.background = pct >= 70 ? '#198754' : pct >= 50 ? '#ffc107' : '#dc3545';
+    label.textContent = pct + '%';
+  }
+}
+
+function updateWeight(catId, val) {
+  var cat = CATEGORIES.find(function(c){ return c.id === catId; });
+  cat.weight = parseInt(val, 10);
+  document.getElementById('wb-' + catId).textContent = val + '%';
+  updateWeightWarning();
+}
+
+function updateWeightWarning() {
+  var total = CATEGORIES.reduce(function(s, c){ return s + c.weight; }, 0);
+  document.getElementById('weightTotal').textContent = total;
+  var warn = document.getElementById('weightWarning');
+  if (total !== 100) { warn.classList.remove('hidden'); }
+  else               { warn.classList.add('hidden'); }
+}
+
+// ─── Navigation ────────────────────────────────────────────────────────────
+function goStep(n) {
+  [1,2,3].forEach(function(i){
+    document.getElementById('step' + i).classList[i === n ? 'remove' : 'add']('hidden');
+    var nav = document.getElementById('nav' + i);
+    nav.className = 'step' + (i < n ? ' done' : i === n ? ' active' : '');
+  });
+  if (n === 2) renderCategories();
+  window.scrollTo(0, 0);
+}
+
+// ─── Report generation ─────────────────────────────────────────────────────
+function generateReport() {
+  var total = CATEGORIES.reduce(function(s, c){ return s + c.weight; }, 0);
+  if (total !== 100) {
+    alert('Category weights must sum to 100% before generating the report. Current total: ' + total + '%.');
+    return;
+  }
+
+  // Check all criteria rated
+  var unrated = [];
+  CATEGORIES.forEach(function(cat) {
+    cat.criteria.forEach(function(cr, i) {
+      if (scores[cat.id][i] === null) unrated.push(cat.label + ': ' + cr);
+    });
+  });
+  if (unrated.length > 0) {
+    if (!confirm(unrated.length + ' criterion/criteria not yet rated. Generate report with partial data?')) return;
+  }
+
+  // Compute weighted score
+  var weightedScore = 0;
+  CATEGORIES.forEach(function(cat) {
+    var pct = catAvgPct(cat);
+    if (pct !== null) weightedScore += (pct * cat.weight / 100);
+  });
+  weightedScore = Math.round(weightedScore);
+
+  // Populate report
+  // — Overall widget
+  document.getElementById('rptScore').textContent = weightedScore;
+  var verdict, verdictSub, verdictClass;
+  if (weightedScore >= 70) {
+    verdict = '✅ GO — Strong Reuse Candidate';
+    verdictSub = 'This facility scores above the 70% threshold and is recommended for further reuse feasibility study.';
+    verdictClass = 'verdict verdict-go';
+  } else if (weightedScore >= 50) {
+    verdict = '⚠️ CONDITIONAL — Further Study Required';
+    verdictSub = 'This facility scores in the 50–69% range. Conditional reuse may be possible subject to addressing key deficiencies.';
+    verdictClass = 'verdict verdict-cond';
+  } else {
+    verdict = '🚫 NO-GO — Not Recommended';
+    verdictSub = 'This facility scores below 50%. Significant barriers exist; reuse is unlikely to be cost-effective.';
+    verdictClass = 'verdict verdict-nogo';
+  }
+  document.getElementById('rptVerdict').textContent = verdict.replace(/^[^\s]+\s/, '');
+  document.getElementById('rptVerdict').className = verdictClass;
+  document.getElementById('rptVerdictSub').textContent = verdictSub;
+
+  // — Facility summary
+  var yr = document.getElementById('facilityYear').value;
+  var dl = document.getElementById('facilityDesignLife').value;
+  var age = yr ? (2026 - parseInt(yr, 10)) : null;
+  var remaining = (age !== null && dl) ? (parseInt(dl,10) - age) : null;
+  document.getElementById('rptFacilityBody').innerHTML =
+    '<div class="row">' +
+      cell('Facility', document.getElementById('facilityName').value || '—') +
+      cell('Type', document.getElementById('facilityType').value || '—') +
+      cell('Current Location', document.getElementById('facilityLocation').value || '—') +
+      cell('Year Installed', yr || '—') +
+      cell('Design Life', dl ? dl + ' yrs' : '—') +
+      cell('Age (2026)', age !== null ? age + ' yrs' : '—') +
+      cell('Design Life Remaining', remaining !== null ? remaining + ' yrs' : '—') +
+      cell('Proposed Reuse Field', document.getElementById('targetLocation').value || '—') +
+      cell('Assessed By', document.getElementById('assessedBy').value || '—') +
+      cell('Assessment Date', new Date().toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'})) +
+    '</div>' +
+    (document.getElementById('facilityNotes').value ?
+      '<p style="margin-top:10px; font-style:italic; color:#555;">' + esc(document.getElementById('facilityNotes').value) + '</p>' : '');
+
+  // — Category table
+  var catRows = '';
+  CATEGORIES.forEach(function(cat) {
+    var pct = catAvgPct(cat);
+    var contrib = pct !== null ? Math.round(pct * cat.weight / 100) : '—';
+    var rag = pct === null ? '' : pct >= 70 ? '<span class="rag rag-g"></span>Green' :
+                                  pct >= 50 ? '<span class="rag rag-a"></span>Amber' :
+                                              '<span class="rag rag-r"></span>Red';
+    catRows += '<tr>' +
+      '<td>' + cat.icon + ' ' + cat.label + '</td>' +
+      '<td>' + cat.weight + '%</td>' +
+      '<td>' + (pct !== null ? pct + '%' : '—') + '</td>' +
+      '<td>' + contrib + (typeof contrib === 'number' ? '/'+cat.weight : '') + '</td>' +
+      '<td>' + rag + '</td>' +
+    '</tr>';
+  });
+  document.getElementById('rptCatTable').innerHTML = catRows;
+  document.getElementById('rptTotal').textContent = weightedScore + '/100';
+  document.getElementById('rptRag').innerHTML = weightedScore >= 70 ? '<span class="rag rag-g"></span>Green' :
+    weightedScore >= 50 ? '<span class="rag rag-a"></span>Amber' : '<span class="rag rag-r"></span>Red';
+
+  // — Criterion detail
+  var detailHTML = '';
+  CATEGORIES.forEach(function(cat) {
+    detailHTML += '<div class="detail-section"><h5>' + cat.icon + ' ' + cat.label + '</h5>' +
+      '<table class="result-table"><thead><tr><th>Criterion</th><th>Score</th><th>Rating</th></tr></thead><tbody>';
+    cat.criteria.forEach(function(cr, i) {
+      var s = scores[cat.id][i];
+      detailHTML += '<tr>' +
+        '<td>' + cr + '</td>' +
+        '<td>' + (s !== null ? s + '/5' : '—') + '</td>' +
+        '<td>' + (s !== null ? '<span style="color:' + ratingColor(s) + '; font-weight:700;">' + ratingLabel(s) + '</span>' : '—') + '</td>' +
+      '</tr>';
+    });
+    detailHTML += '</tbody></table></div>';
+  });
+  document.getElementById('rptCritDetail').innerHTML = detailHTML;
+
+  // — Recommendations
+  var recs = buildRecommendations(weightedScore);
+  document.getElementById('rptRecommendations').innerHTML = recs;
+
+  // Print meta
+  document.getElementById('printMeta').textContent =
+    'Facility: ' + (document.getElementById('facilityName').value || 'Unnamed') +
+    ' | Type: ' + (document.getElementById('facilityType').value || '—') +
+    ' | Assessed: ' + new Date().toLocaleDateString('en-GB') +
+    ' | Assessed by: ' + (document.getElementById('assessedBy').value || '—');
+
+  goStep(3);
+}
+
+function buildRecommendations(score) {
+  var weakCats = [];
+  CATEGORIES.forEach(function(cat) {
+    var pct = catAvgPct(cat);
+    if (pct !== null && pct < 50) weakCats.push(cat.label + ' (' + pct + '%)');
+  });
+
+  var html = '';
+  if (score >= 70) {
+    html = '<p><strong>Overall:</strong> This facility is a strong reuse candidate. Recommended next steps:</p>' +
+      '<ul>' +
+      '<li>Commission a detailed FEED or pre-FEED study for the proposed reuse field.</li>' +
+      '<li>Engage class society for a gap analysis against new field requirements.</li>' +
+      '<li>Initiate formal condition survey and life extension study for any amber/red criteria.</li>' +
+      '<li>Begin regulatory pre-engagement with the relevant flag state and competent authority.</li>' +
+      '</ul>';
+  } else if (score >= 50) {
+    html = '<p><strong>Overall:</strong> Conditional reuse may be viable. Priority actions before committing:</p>' +
+      '<ul>' +
+      '<li>Conduct targeted brownfield surveys on all criteria rated 1–2 (Poor/Very Poor).</li>' +
+      '<li>Obtain a high-level cost estimate for remediation of identified deficiencies.</li>' +
+      '<li>Perform a comparative economics study (reuse vs. new-build) once remediation scope is defined.</li>' +
+      '<li>Review mooring / structural certification requirements for the new field environment.</li>' +
+      '</ul>';
+  } else {
+    html = '<p><strong>Overall:</strong> Reuse is not recommended at this stage. Fundamental barriers exist. Consider:</p>' +
+      '<ul>' +
+      '<li>Evaluate new-build or alternative vessel/platform options.</li>' +
+      '<li>If reuse is still desired, a full feasibility study with clear go/no-go decision gates is required.</li>' +
+      '<li>Quantify decommissioning costs as part of the overall facility lifecycle plan.</li>' +
+      '</ul>';
+  }
+
+  if (weakCats.length > 0) {
+    html += '<p><strong>Red-flag categories requiring immediate attention:</strong> ' + weakCats.join('; ') + '.</p>';
+  }
+
+  return html;
+}
+
+// ─── Helpers ───────────────────────────────────────────────────────────────
+function cell(label, val) {
+  return '<div class="col-sm-6 col-md-4" style="margin-bottom:8px;">' +
+    '<div class="section-label">' + label + '</div>' +
+    '<div style="font-weight:600;">' + esc(String(val)) + '</div>' +
+  '</div>';
+}
+
+function esc(str) {
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+
+</body>
+</html>

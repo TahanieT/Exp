@@ -14,6 +14,7 @@ var flash=require("connect-flash");
 var campgroundRoutes=require("./routes/campground");
 var commentRoutes=require("./routes/comments");
 var authRoutes=require("./routes/auth");
+var assessmentRoutes=require("./routes/assessment");
 
 
 //Authenication
@@ -62,6 +63,7 @@ var seedDB = require("./seeds");
 app.use(campgroundRoutes);
 app.use(commentRoutes);
 app.use(authRoutes);
+app.use(assessmentRoutes);
 
 
 
