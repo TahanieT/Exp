@@ -1,0 +1,191 @@
+<%- include('../partials/header') %>
+
+<style>
+  .pr-hero {
+    background: linear-gradient(135deg, #1a3a5c 0%, #2d6a9f 100%);
+    color: #fff;
+    padding: 28px 0 22px;
+    margin-bottom: 24px;
+  }
+  .pr-hero h1 { font-size: 1.8rem; margin: 0 0 4px; font-weight: 700; }
+  .pr-hero p  { margin: 0; opacity: .8; font-size: .95rem; }
+  .grade-A { background:#27ae60; color:#fff; }
+  .grade-B { background:#2980b9; color:#fff; }
+  .grade-C { background:#f39c12; color:#fff; }
+  .grade-D { background:#e67e22; color:#fff; }
+  .grade-F { background:#c0392b; color:#fff; }
+  .grade-badge {
+    display: inline-block;
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 30px;
+    font-weight: 700;
+    font-size: .9rem;
+  }
+  .score-bar-wrap { background:#eee; border-radius:4px; height:8px; min-width:80px; display:inline-block; vertical-align:middle; }
+  .score-bar      { background:#2980b9; border-radius:4px; height:8px; }
+  .filter-panel   { background:#f8f9fa; border:1px solid #dee2e6; border-radius:6px; padding:16px; margin-bottom:20px; }
+  .filter-panel .form-group { margin-bottom:10px; }
+  table.pr-table  { font-size:.88rem; }
+  table.pr-table th { white-space:nowrap; background:#2c3e50; color:#fff; border:none !important; }
+  table.pr-table td { vertical-align:middle; }
+  .badge-method   { font-size:.75rem; padding:3px 7px; border-radius:10px; background:#ecf0f1; color:#2c3e50; border:1px solid #bdc3c7; }
+  .pagination>li>a, .pagination>li>span { color:#2980b9; }
+  .pagination>.active>a { background:#2980b9; border-color:#2980b9; }
+  .config-btn     { position:fixed; bottom:24px; right:24px; z-index:999; border-radius:50%; width:52px; height:52px; font-size:1.3rem; box-shadow:0 3px 12px rgba(0,0,0,.25); }
+</style>
+
+<div class="pr-hero">
+  <div class="container">
+    <h1>Platform Reuse Selection Tool</h1>
+    <p>Score and rank offshore platform structures for reuse suitability &mdash; <%= total.toLocaleString() %> records found</p>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Filter panel -->
+  <form method="GET" action="/platform-reuse" class="filter-panel">
+    <div class="row">
+      <div class="col-sm-3 form-group">
+        <label>Company Name</label>
+        <input type="text" class="form-control input-sm" name="company" value="<%= query.company || '' %>" placeholder="Search company…">
+      </div>
+      <div class="col-sm-2 form-group">
+        <label>Area</label>
+        <select class="form-control input-sm" name="area">
+          <option value="">All areas</option>
+          <% areas.forEach(function(a){ %>
+            <option value="<%= a %>" <%- query.area === a ? 'selected' : '' %>><%= a %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-sm-2 form-group">
+        <label>Removal Method</label>
+        <select class="form-control input-sm" name="removalMethod">
+          <option value="">All methods</option>
+          <% removalMethods.forEach(function(m){ %>
+            <option value="<%= m %>" <%- query.removalMethod === m ? 'selected' : '' %>><%= m %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-sm-1 form-group">
+        <label>Depth Code</label>
+        <select class="form-control input-sm" name="depthCode">
+          <option value="">Any</option>
+          <% [1,2,3,4,5].forEach(function(d){ %>
+            <option value="<%= d %>" <%- query.depthCode == d ? 'selected' : '' %>><%= d %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-sm-1 form-group">
+        <label>Min Depth (ft)</label>
+        <input type="number" class="form-control input-sm" name="minDepth" value="<%= query.minDepth || '' %>" placeholder="0">
+      </div>
+      <div class="col-sm-1 form-group">
+        <label>Max Depth (ft)</label>
+        <input type="number" class="form-control input-sm" name="maxDepth" value="<%= query.maxDepth || '' %>" placeholder="500">
+      </div>
+      <div class="col-sm-1 form-group">
+        <label>Year From</label>
+        <input type="number" class="form-control input-sm" name="yearFrom" value="<%= query.yearFrom || '' %>" placeholder="1986">
+      </div>
+      <div class="col-sm-1 form-group">
+        <label>Year To</label>
+        <input type="number" class="form-control input-sm" name="yearTo" value="<%= query.yearTo || '' %>" placeholder="2025">
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-sm-12">
+        <button type="submit" class="btn btn-primary btn-sm">Apply Filters</button>
+        <a href="/platform-reuse" class="btn btn-default btn-sm">Clear</a>
+        <span class="text-muted" style="margin-left:12px;font-size:.85rem;">
+          Sorted by reuse score &darr; &nbsp;|&nbsp;
+          Scoring weights: Water Depth <strong><%= config.weights.waterDepth %>%</strong>,
+          Removal Method <strong><%= config.weights.removalMethod %>%</strong>,
+          Age <strong><%= config.weights.platformAge %>%</strong>,
+          Active Wells <strong><%= config.weights.activeWellsNearby %>%</strong>,
+          Size <strong><%= config.weights.depthCode %>%</strong>
+          &nbsp;&mdash;&nbsp;<a href="/platform-reuse-config">Edit scoring config</a>
+        </span>
+      </div>
+    </div>
+  </form>
+
+  <!-- Results table -->
+  <% if (platforms.length === 0) { %>
+    <div class="alert alert-info">No platform records match the current filters.</div>
+  <% } else { %>
+  <div class="table-responsive">
+    <table class="table table-striped table-hover table-condensed pr-table">
+      <thead>
+        <tr>
+          <th>Score</th>
+          <th>Company</th>
+          <th>Area/Block</th>
+          <th>Lease</th>
+          <th>Slot</th>
+          <th>Type</th>
+          <th>Removal Method</th>
+          <th>Depth&nbsp;Code</th>
+          <th>Water&nbsp;Depth (ft)</th>
+          <th>App&nbsp;Date</th>
+          <th>Completion</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% platforms.forEach(function(p){ %>
+        <tr>
+          <td>
+            <span class="grade-badge grade-<%= p.score.grade %>"><%= p.score.grade %></span>
+            &nbsp;
+            <span class="score-bar-wrap"><span class="score-bar" style="width:<%= p.score.total %>%"></span></span>
+            &nbsp;<small><%= p.score.total %></small>
+          </td>
+          <td><%= p.companyName %></td>
+          <td><strong><%= p.area %></strong>&nbsp;<%= p.block %></td>
+          <td><%= p.leaseNum %></td>
+          <td><%= p.slot %></td>
+          <td><small><%= p.type %></small></td>
+          <td><span class="badge-method"><%= p.removalMethod || '—' %></span></td>
+          <td style="text-align:center"><%= p.depthCode || '—' %></td>
+          <td style="text-align:right"><%= p.waterDepth > 0 ? p.waterDepth.toLocaleString() : '—' %></td>
+          <td><small><%= p.appDate %></small></td>
+          <td><small><%= p.completionDate %></small></td>
+          <td><a href="/platform-reuse/<%= p.id %>" class="btn btn-xs btn-info">Detail</a></td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <% if (totalPages > 1) { %>
+  <nav>
+    <ul class="pagination pagination-sm">
+      <% if (page > 1) { %>
+        <li><a href="?<%- Object.entries(query).filter(([k])=>k!=='page').map(([k,v])=>k+'='+encodeURIComponent(v)).join('&') %>&page=<%= page-1 %>">&laquo;</a></li>
+      <% } %>
+      <% for (var pg = Math.max(1, page-3); pg <= Math.min(totalPages, page+3); pg++) { %>
+        <li class="<%= pg === page ? 'active' : '' %>">
+          <a href="?<%- Object.entries(query).filter(([k])=>k!=='page').map(([k,v])=>k+'='+encodeURIComponent(v)).join('&') %>&page=<%= pg %>"><%= pg %></a>
+        </li>
+      <% } %>
+      <% if (page < totalPages) { %>
+        <li><a href="?<%- Object.entries(query).filter(([k])=>k!=='page').map(([k,v])=>k+'='+encodeURIComponent(v)).join('&') %>&page=<%= page+1 %>">&raquo;</a></li>
+      <% } %>
+    </ul>
+  </nav>
+  <p class="text-muted text-center" style="margin-top:-8px;font-size:.82rem;">
+    Showing <%= ((page-1)*PAGE_SIZE)+1 %>–<%= Math.min(page*PAGE_SIZE, total) %> of <%= total.toLocaleString() %> records
+  </p>
+  <% } %>
+  <% } %>
+</div>
+
+<!-- Floating config button -->
+<a href="/platform-reuse-config" class="btn btn-warning config-btn" title="Edit Scoring Config">&#9881;</a>
+
+<%- include('../partials/footer') %>

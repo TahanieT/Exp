@@ -1,0 +1,180 @@
+<%- include('../partials/header') %>
+
+<style>
+  .detail-hero {
+    background: linear-gradient(135deg, #1a3a5c 0%, #2d6a9f 100%);
+    color: #fff;
+    padding: 24px 0 20px;
+    margin-bottom: 24px;
+  }
+  .detail-hero h2 { margin:0 0 4px; font-size:1.6rem; font-weight:700; }
+  .detail-hero p  { margin:0; opacity:.8; font-size:.92rem; }
+  .score-circle {
+    width:80px; height:80px; border-radius:50%;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    font-size:1.6rem; font-weight:700;
+    float:right; margin-left:20px;
+  }
+  .score-circle small { font-size:.7rem; font-weight:400; }
+  .grade-A { background:#27ae60; color:#fff; }
+  .grade-B { background:#2980b9; color:#fff; }
+  .grade-C { background:#f39c12; color:#fff; }
+  .grade-D { background:#e67e22; color:#fff; }
+  .grade-F { background:#c0392b; color:#fff; }
+  .component-bar-wrap { background:#eee; border-radius:4px; height:14px; }
+  .component-bar      { border-radius:4px; height:14px; background:#2980b9; }
+  .info-table td:first-child { font-weight:600; width:38%; color:#555; }
+  .info-table td { padding:6px 8px; }
+  .section-title { font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:#888; margin: 18px 0 8px; }
+</style>
+
+<div class="detail-hero">
+  <div class="container">
+    <a href="/platform-reuse" class="btn btn-sm btn-default" style="opacity:.85;margin-bottom:10px;">&larr; Back to results</a>
+
+    <div class="score-circle grade-<%= platform.score.grade %>">
+      <span><%= platform.score.total %></span>
+      <small>Grade <%= platform.score.grade %></small>
+    </div>
+
+    <h2><%= platform.companyName %></h2>
+    <p>Area <strong><%= platform.area %></strong> &nbsp;Block <strong><%= platform.block %></strong> &nbsp;|&nbsp; Lease <strong><%= platform.leaseNum %></strong> &nbsp;|&nbsp; Slot <strong><%= platform.slot %></strong> &nbsp;|&nbsp; App# <strong><%= platform.appNum %></strong></p>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+
+    <!-- Left: platform details -->
+    <div class="col-md-5">
+      <h4 class="section-title">Structure Details</h4>
+      <table class="table table-condensed info-table">
+        <tr><td>Company</td><td><%= platform.companyName %> (<%= platform.companyId %>)</td></tr>
+        <tr><td>Area / Block</td><td><%= platform.area %> &nbsp; <%= platform.block %></td></tr>
+        <tr><td>Lease Number</td><td><%= platform.leaseNum %></td></tr>
+        <tr><td>Slot</td><td><%= platform.slot %></td></tr>
+        <tr><td>Application #</td><td><%= platform.appNum %></td></tr>
+        <tr><td>Record Type</td><td><%= platform.type %></td></tr>
+        <tr><td>Application Date</td><td><%= platform.appDate %></td></tr>
+        <tr><td>Approval Date</td><td><%= platform.approvalDate %></td></tr>
+        <tr><td>Completion Date</td><td><%= platform.completionDate %></td></tr>
+        <tr><td>Effective Date</td><td><%= platform.effectiveDate %></td></tr>
+        <tr><td>Month / Year</td><td><%= platform.monthYear %></td></tr>
+        <tr><td>Removal Method</td><td><strong><%= platform.removalMethod || '—' %></strong></td></tr>
+        <tr><td>Depth Code</td><td><%= platform.depthCode || '—' %></td></tr>
+        <tr><td>Structure ID</td><td><%= platform.structureId %></td></tr>
+        <tr><td>Sequence #</td><td><%= platform.seqNum %></td></tr>
+        <tr><td>Water Depth (ft)</td><td><%= platform.waterDepth > 0 ? platform.waterDepth.toLocaleString() : '—' %></td></tr>
+      </table>
+    </div>
+
+    <!-- Right: score breakdown -->
+    <div class="col-md-7">
+      <h4 class="section-title">Reuse Score Breakdown</h4>
+      <table class="table table-condensed" style="font-size:.88rem">
+        <thead>
+          <tr>
+            <th>Component</th>
+            <th>Weight</th>
+            <th>Raw (0–100)</th>
+            <th style="min-width:120px">Score</th>
+            <th>Weighted</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% var labels = {
+               waterDepth: 'Water Depth',
+               removalMethod: 'Removal Method',
+               platformAge: 'Platform Age',
+               activeWellsNearby: 'Active Wells Nearby',
+               depthCode: 'Platform Size (Depth Code)'
+             }; %>
+          <% Object.entries(platform.score.components).forEach(function(entry){ var name=entry[0]; var c=entry[1]; %>
+          <tr>
+            <td><%= labels[name] || name %></td>
+            <td><%= c.weight %>%</td>
+            <td><%= c.raw %></td>
+            <td>
+              <div class="component-bar-wrap">
+                <div class="component-bar" style="width:<%= c.raw %>%"></div>
+              </div>
+            </td>
+            <td><strong><%= c.weighted %></strong></td>
+          </tr>
+          <% }) %>
+        </tbody>
+        <tfoot>
+          <tr style="font-weight:700; border-top:2px solid #ccc;">
+            <td colspan="4" style="text-align:right">Total Reuse Score:</td>
+            <td><%= platform.score.total %> / 100</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <!-- Active wells in same area/block -->
+      <h4 class="section-title">
+        Wells in <%= platform.area %>&nbsp;<%= platform.block %>
+        <span class="badge" style="background:#2980b9"><%= wells.length %> total</span>
+        <span class="badge" style="background:#27ae60"><%= activeWells.length %> producing</span>
+      </h4>
+      <% if (wells.length === 0) { %>
+        <p class="text-muted" style="font-size:.88rem">No well records for this area/block.</p>
+      <% } else { %>
+        <div style="max-height:220px;overflow-y:auto">
+          <table class="table table-condensed" style="font-size:.82rem">
+            <thead>
+              <tr>
+                <th>Operator</th>
+                <th>Well ID</th>
+                <th>Type</th>
+                <th>Oil (BBL)</th>
+                <th>Gas (MCF)</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% wells.slice(0, 40).forEach(function(w){ %>
+              <tr class="<%= (w.oilProd>0||w.gasProd>0) ? '' : 'text-muted' %>">
+                <td><%= w.operatorName %></td>
+                <td><%= w.wellId %></td>
+                <td><%= w.wellType %></td>
+                <td style="text-align:right"><%= w.oilProd > 0 ? w.oilProd.toLocaleString() : '' %></td>
+                <td style="text-align:right"><%= w.gasProd > 0 ? w.gasProd.toLocaleString() : '' %></td>
+                <td><%= w.statusCode %></td>
+              </tr>
+              <% }) %>
+              <% if (wells.length > 40) { %>
+              <tr><td colspan="6" class="text-muted text-center"><em>…and <%= wells.length - 40 %> more</em></td></tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+
+      <!-- Similar platforms -->
+      <% if (sameArea.length > 0) { %>
+      <h4 class="section-title">Top Candidates in Area <%= platform.area %></h4>
+      <table class="table table-condensed" style="font-size:.82rem">
+        <thead>
+          <tr><th>Score</th><th>Company</th><th>Block</th><th>Lease</th><th>Depth (ft)</th><th></th></tr>
+        </thead>
+        <tbody>
+          <% sameArea.forEach(function(s){ %>
+          <tr>
+            <td><strong><%= s.score.total %></strong></td>
+            <td><%= s.companyName %></td>
+            <td><%= s.block %></td>
+            <td><%= s.leaseNum %></td>
+            <td style="text-align:right"><%= s.waterDepth > 0 ? s.waterDepth : '—' %></td>
+            <td><a href="/platform-reuse/<%= s.id %>" class="btn btn-xs btn-info">View</a></td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

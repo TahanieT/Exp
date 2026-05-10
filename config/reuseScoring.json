@@ -1,0 +1,34 @@
+{
+  "weights": {
+    "waterDepth": 25,
+    "removalMethod": 30,
+    "platformAge": 20,
+    "activeWellsNearby": 15,
+    "depthCode": 10
+  },
+  "waterDepth": {
+    "mode": "shallow_preferred",
+    "maxDepth": 500
+  },
+  "removalMethod": {
+    "NON-EXPLOSIVES": 1.0,
+    "EXPLOSIVES GENERIC": 0.5,
+    "EXPLOSIVES": 0.2,
+    "default": 0.3
+  },
+  "platformAge": {
+    "maxYears": 50,
+    "preferNewer": false
+  },
+  "depthCode": {
+    "1": 0.4,
+    "2": 0.55,
+    "3": 0.70,
+    "4": 0.85,
+    "5": 1.0
+  },
+  "meta": {
+    "description": "Platform Reuse Selection Tool — scoring configuration. Weights must sum to 100. waterDepth.mode: 'shallow_preferred' scores shallower platforms higher, 'deep_preferred' scores deeper ones higher. platformAge.preferNewer: false means older platforms (more reuse history) score higher.",
+    "version": "1.0"
+  }
+}

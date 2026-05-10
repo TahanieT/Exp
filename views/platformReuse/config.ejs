@@ -1,0 +1,226 @@
+<%- include('../partials/header') %>
+
+<style>
+  .cfg-hero {
+    background: linear-gradient(135deg, #2c3e50 0%, #3d5a73 100%);
+    color: #fff;
+    padding: 24px 0 20px;
+    margin-bottom: 24px;
+  }
+  .cfg-hero h2 { margin:0 0 4px; font-size:1.5rem; font-weight:700; }
+  .cfg-hero p  { margin:0; opacity:.8; font-size:.9rem; }
+  .param-card {
+    border:1px solid #dee2e6;
+    border-radius:6px;
+    padding:16px 18px;
+    margin-bottom:14px;
+    background:#fff;
+  }
+  .param-card h5 { margin:0 0 10px; font-size:.95rem; font-weight:700; color:#2c3e50; }
+  .weight-row input[type=range] { width:100%; }
+  .weight-val { font-weight:700; color:#2980b9; min-width:38px; text-align:right; display:inline-block; }
+  .sum-indicator { font-size:.85rem; margin-top:6px; }
+  .json-editor {
+    font-family: monospace;
+    font-size: .82rem;
+    min-height: 420px;
+    resize: vertical;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    padding: 10px;
+    width: 100%;
+  }
+  .json-editor:focus { outline:none; border-color:#2980b9; box-shadow:0 0 0 2px rgba(41,128,185,.2); }
+</style>
+
+<div class="cfg-hero">
+  <div class="container">
+    <a href="/platform-reuse" class="btn btn-sm btn-default" style="opacity:.85;margin-bottom:10px;">&larr; Back to results</a>
+    <h2>Scoring Configuration</h2>
+    <p>Adjust weights and scoring parameters for the Platform Reuse Selection Tool. Weights must sum to 100.</p>
+  </div>
+</div>
+
+<div class="container">
+  <% if (errors && errors.length > 0) { %>
+    <div class="alert alert-danger">
+      <strong>Configuration errors:</strong>
+      <ul style="margin:6px 0 0">
+        <% errors.forEach(function(e){ %><li><%= e %></li><% }) %>
+      </ul>
+    </div>
+  <% } %>
+
+  <div class="row">
+    <!-- Left: visual weight editor -->
+    <div class="col-md-5">
+      <h4 style="font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:12px">Quick Weight Editor</h4>
+
+      <div class="param-card">
+        <h5>Scoring Weights</h5>
+        <p class="text-muted" style="font-size:.82rem;margin-bottom:12px">Drag to adjust — changes are reflected in the JSON editor. Save when weights sum to 100.</p>
+
+        <% var weightLabels = {
+          waterDepth: 'Water Depth',
+          removalMethod: 'Removal Method',
+          platformAge: 'Platform Age',
+          activeWellsNearby: 'Active Wells Nearby',
+          depthCode: 'Platform Size (Depth Code)'
+        }; %>
+
+        <% Object.entries(config.weights).forEach(function(entry){ var k=entry[0]; var v=entry[1]; %>
+        <div class="weight-row" style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
+            <label style="margin:0;font-size:.88rem"><%= weightLabels[k] || k %></label>
+            <span class="weight-val" id="lbl_<%= k %>"><%= v %>%</span>
+          </div>
+          <input type="range" min="0" max="100" value="<%= v %>"
+                 data-weight="<%= k %>"
+                 oninput="onWeightChange(this)"
+                 style="accent-color:#2980b9">
+        </div>
+        <% }) %>
+
+        <div class="sum-indicator">
+          Weight sum: <strong id="weightSum"><%= Object.values(config.weights).reduce((a,b)=>a+b,0) %></strong>
+          / 100
+          <span id="sumOk" style="color:<%= Object.values(config.weights).reduce((a,b)=>a+b,0) === 100 ? '#27ae60' : '#c0392b' %>; font-weight:700">
+            &nbsp;<%= Object.values(config.weights).reduce((a,b)=>a+b,0) === 100 ? '✓' : '✗ must equal 100' %>
+          </span>
+        </div>
+      </div>
+
+      <div class="param-card">
+        <h5>Water Depth Mode</h5>
+        <select class="form-control input-sm" id="depthMode" onchange="syncToJson()">
+          <option value="shallow_preferred" <%- config.waterDepth.mode === 'shallow_preferred' ? 'selected' : '' %>>Shallow Preferred (Rigs-to-Reefs, nearshore reuse)</option>
+          <option value="deep_preferred"    <%- config.waterDepth.mode === 'deep_preferred'    ? 'selected' : '' %>>Deep Preferred (deepwater infrastructure reuse)</option>
+        </select>
+        <p class="text-muted" style="font-size:.8rem;margin-top:6px">Max reference depth:
+          <input type="number" id="maxDepth" value="<%= config.waterDepth.maxDepth %>" min="50" max="5000"
+                 class="form-control input-sm" style="width:90px;display:inline-block" onchange="syncToJson()"> ft
+        </p>
+      </div>
+
+      <div class="param-card">
+        <h5>Platform Age</h5>
+        <label style="font-weight:400;font-size:.88rem">
+          <input type="checkbox" id="preferNewer" <%- config.platformAge.preferNewer ? 'checked' : '' %> onchange="syncToJson()">
+          &nbsp;Prefer newer platforms (higher score for recent structures)
+        </label>
+        <p class="text-muted" style="font-size:.8rem;margin-top:6px">Max age span:
+          <input type="number" id="maxYears" value="<%= config.platformAge.maxYears %>" min="5" max="100"
+                 class="form-control input-sm" style="width:80px;display:inline-block" onchange="syncToJson()"> years
+        </p>
+      </div>
+
+      <div class="param-card">
+        <h5>Removal Method Scores</h5>
+        <% [['NON-EXPLOSIVES','Non-Explosives'],['EXPLOSIVES GENERIC','Explosives Generic'],['EXPLOSIVES','Explosives']].forEach(function(pair){ var key=pair[0]; var label=pair[1]; %>
+        <div style="display:flex;align-items:center;margin-bottom:6px">
+          <label style="width:170px;font-size:.85rem;margin:0"><%= label %></label>
+          <input type="range" min="0" max="100" value="<%= Math.round((config.removalMethod[key]||0)*100) %>"
+                 data-method="<%= key %>"
+                 oninput="onMethodChange(this)"
+                 style="flex:1;accent-color:#27ae60">
+          &nbsp;<span class="weight-val" id="rm_<%= key.replace(/ /g,'_') %>"><%= Math.round((config.removalMethod[key]||0)*100) %></span>
+        </div>
+        <% }) %>
+      </div>
+    </div>
+
+    <!-- Right: raw JSON editor -->
+    <div class="col-md-7">
+      <h4 style="font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:12px">JSON Configuration</h4>
+      <form method="POST" action="/platform-reuse-config" id="configForm">
+        <textarea class="json-editor" name="configJson" id="jsonEditor" spellcheck="false"><%= configJson %></textarea>
+        <div style="margin-top:12px;display:flex;align-items:center;gap:10px">
+          <button type="submit" class="btn btn-success">Save Configuration</button>
+          <a href="/platform-reuse" class="btn btn-default">Cancel</a>
+          <span class="text-muted" style="font-size:.82rem">Changes to the visual editor update the JSON automatically.</span>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Reference -->
+  <div class="row" style="margin-top:24px">
+    <div class="col-md-12">
+      <div class="panel panel-default">
+        <div class="panel-heading" style="background:#f8f9fa;font-size:.82rem;font-weight:700">Configuration Reference</div>
+        <div class="panel-body" style="font-size:.82rem">
+          <div class="row">
+            <div class="col-sm-4">
+              <strong>Weights</strong> (must sum to 100)<br>
+              Each weight controls what fraction of the final score comes from that component.
+            </div>
+            <div class="col-sm-4">
+              <strong>Water Depth</strong><br>
+              <em>shallow_preferred</em>: lower depth → higher score (reef programs, nearshore).<br>
+              <em>deep_preferred</em>: greater depth → higher score (deepwater hub reuse).
+            </div>
+            <div class="col-sm-4">
+              <strong>Removal Method Scores</strong><br>
+              NON-EXPLOSIVES = best structural integrity.<br>
+              EXPLOSIVES GENERIC = moderate.<br>
+              EXPLOSIVES = lowest structural reuse potential.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Keep in-memory shadow of the parsed config so the visual controls stay in sync
+var currentConfig = <%- configJson %>;
+
+function getJsonEditor() { return document.getElementById('jsonEditor'); }
+
+function syncFromJson() {
+  try {
+    currentConfig = JSON.parse(getJsonEditor().value);
+    refreshVisuals();
+  } catch(e) { /* leave as-is */ }
+}
+
+function syncToJson() {
+  // Read visual controls back into currentConfig
+  document.querySelectorAll('[data-weight]').forEach(function(el) {
+    currentConfig.weights[el.dataset.weight] = parseInt(el.value);
+  });
+  currentConfig.waterDepth.mode    = document.getElementById('depthMode').value;
+  currentConfig.waterDepth.maxDepth = parseInt(document.getElementById('maxDepth').value);
+  currentConfig.platformAge.preferNewer = document.getElementById('preferNewer').checked;
+  currentConfig.platformAge.maxYears    = parseInt(document.getElementById('maxYears').value);
+  document.querySelectorAll('[data-method]').forEach(function(el) {
+    currentConfig.removalMethod[el.dataset.method] = parseInt(el.value) / 100;
+  });
+  getJsonEditor().value = JSON.stringify(currentConfig, null, 2);
+  updateWeightSum();
+}
+
+function onWeightChange(el) {
+  document.getElementById('lbl_' + el.dataset.weight).textContent = el.value + '%';
+  syncToJson();
+}
+
+function onMethodChange(el) {
+  document.getElementById('rm_' + el.dataset.method.replace(/ /g,'_')).textContent = el.value;
+  syncToJson();
+}
+
+function updateWeightSum() {
+  var sum = Object.values(currentConfig.weights || {}).reduce(function(a,b){return a+Number(b);}, 0);
+  document.getElementById('weightSum').textContent = sum;
+  var ok = Math.abs(sum - 100) < 1;
+  document.getElementById('sumOk').style.color = ok ? '#27ae60' : '#c0392b';
+  document.getElementById('sumOk').textContent  = ok ? ' ✓' : ' ✗ must equal 100';
+}
+
+// Keep JSON editor → visuals sync
+getJsonEditor().addEventListener('input', syncFromJson);
+</script>
+
+<%- include('../partials/footer') %>
